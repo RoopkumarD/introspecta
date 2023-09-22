@@ -2,7 +2,15 @@
 export default {
   content: ["./src/**/*.{html,js,svelte,ts}"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        inter: ["Inter", "sans-serif"],
+        abrilFatFace: ["Abril Fatface", "cursive"],
+      },
+    },
   },
   plugins: [require("daisyui")],
+  daisyui: {
+    themes: ["cupcake"],
+  },
 };

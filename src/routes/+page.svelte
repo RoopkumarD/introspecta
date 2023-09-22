@@ -1,2 +1,11 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<script lang="ts">
+  import Home from "$lib/components/Dashboard/Home.svelte";
+  import Login from "$lib/components/Login/Login.svelte";
+  import { stage } from "$lib/store";
+</script>
+
+{#if $stage === "Login"}
+  <Login />
+{:else if $stage === "Dashboard"}
+  <Home />
+{/if}
