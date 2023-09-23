@@ -1,10 +1,78 @@
 <script lang="ts">
   import { getWords } from "$lib/diceware/index";
   import eff from "$lib/diceware/eff";
+  import createAcc from "$lib/createAcc?worker";
+  import { onDestroy, onMount } from "svelte";
+  import { wrap } from "comlink";
+  import { journalling, stage } from "$lib/store";
+  import { clear, createStore } from "idb-keyval";
 
   const passphrase = getWords(5, 5, eff);
   let backed = false;
+  let deletePreviousEntries = false;
+
+  async function createKeyPairs() {
+    if (localStorage.getItem("pubKey") !== null && !deletePreviousEntries) {
+      dialog.showModal();
+      return;
+    }
+
+    if (localStorage.getItem("pubKey") !== null && deletePreviousEntries) {
+      // delete the previous stuff
+      localStorage.removeItem("pubKey");
+      localStorage.removeItem("lastSync");
+      const entriesStore = createStore("introspecta", "entries");
+      await clear(entriesStore);
+    }
+
+    const { publicKey } = await workerApi.generateKeyPairs(passphrase.join(""));
+    localStorage.setItem("pubKey", publicKey);
+    $journalling.pubKey = publicKey;
+    $journalling.currentJournal = "default";
+    $journalling.journals = ["default"];
+    $journalling.entries = {
+      default: [],
+    };
+    $journalling.currentLogs = [];
+    $stage = "Dashboard";
+  }
+
+  interface WorkerApi {
+    generateKeyPairs: (passphrase: string) => Promise<{ publicKey: string }>;
+  }
+  let worker: Worker | undefined;
+  let workerApi: WorkerApi;
+  onMount(() => {
+    worker = new createAcc();
+    workerApi = wrap<WorkerApi>(worker);
+  });
+
+  onDestroy(() => {
+    worker?.terminate();
+  });
+
+  let dialog: HTMLDialogElement;
 </script>
+
+<dialog class="modal" bind:this={dialog}>
+  <div class="modal-box leading-2">
+    <p>There are some old entries in this browser</p>
+    <p>If you want to delete them, then press continue</p>
+    <p>If not then press cancel</p>
+    <div class="flex gap-3 mt-4">
+      <button on:click={() => dialog.close()} class="btn-secondary btn grow"
+        >cancel</button
+      >
+      <button
+        on:click={() => {
+          deletePreviousEntries = true;
+          createKeyPairs();
+        }}
+        class="btn-accent btn grow">continue</button
+      >
+    </div>
+  </div>
+</dialog>
 
 <main
   class="font-inter flex flex-col items-center mt-10 lg:mt-24
@@ -33,8 +101,10 @@
       />
     </label>
   </div>
-  <button disabled={!backed} class="btn btn-secondary btn-wide mb-3 text-xl"
-    >continue</button
+  <button
+    disabled={!backed}
+    on:click={createKeyPairs}
+    class="btn btn-secondary btn-wide mb-3 text-xl">continue</button
   >
   <p
     class="text-error text-center w-3/4 lg:w-1/2 mb-12 text-sm

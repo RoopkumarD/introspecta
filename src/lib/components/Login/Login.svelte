@@ -2,7 +2,7 @@
   import EnterKey from "./EnterKey.svelte";
   import CreateKey from "./CreateKey.svelte";
 
-  let createKey = false;
+  let createKey = true;
 </script>
 
 <nav class="flex justify-between items-center px-4 pt-4 xl:px-8">
@@ -33,7 +33,7 @@
   </label>
 </nav>
 {#if createKey === false}
-  <EnterKey bind:createKey={createKey} />
+  <EnterKey bind:createKey />
 {:else}
   <CreateKey />
 {/if}

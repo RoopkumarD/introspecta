@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { blog } from "$lib/store";
+  import { blog, journalling } from "$lib/store";
+  import { createStore, del, set, update } from "idb-keyval";
+  import { onMount, onDestroy } from "svelte";
+  import encrypt from "$lib/encrypt?worker";
+  import toast, { Toaster } from "svelte-french-toast";
+  import { wrap } from "comlink";
   export let drawerOpen: boolean, writeBlog: boolean;
 
   function goToHome() {
@@ -9,44 +14,133 @@
 
     writeBlog = false;
   }
+
+  const entriesStore = createStore("introspecta", "entries");
+
+  async function saveLog() {
+    const timestamp = new Date().getTime();
+
+    if ($journalling.updateIndex !== -1) {
+      const encrypted = await workerApi.encryptLog(
+        JSON.stringify({
+          title: $blog.title,
+          content: $blog.content,
+          timestamp: timestamp,
+          journal:
+            $journalling.currentLogs[$journalling.updateIndex].log.journal,
+        }),
+        $journalling.pubKey
+      );
+
+      try {
+        await update(
+          $blog.id,
+          (val) => {
+            return {
+              id: $blog.id,
+              entry: encrypted,
+            };
+          },
+          entriesStore
+        );
+      } catch (err) {
+        toast.error("Err while saving entry to indexeddb");
+        return;
+      }
+
+      // updating ui
+      $journalling.currentLogs.splice($journalling.updateIndex, 1);
+      $journalling.currentLogs.unshift({
+        id: $blog.id,
+        log: {
+          title: $blog.title,
+          content: $blog.content,
+          timestamp: timestamp,
+          journal:
+            $journalling.currentLogs[$journalling.updateIndex].log.journal,
+        },
+      });
+
+      $journalling.updateIndex = -1;
+    } else {
+      const encrypted = await workerApi.encryptLog(
+        JSON.stringify({
+          title: $blog.title,
+          content: $blog.content,
+          timestamp: timestamp,
+          journal: $journalling.currentJournal,
+        }),
+        $journalling.pubKey
+      );
+
+      try {
+        await set($blog.id, { id: $blog.id, entry: encrypted }, entriesStore);
+      } catch (err) {
+        toast.error("Err while saving entry to indexeddb");
+        return;
+      }
+
+      // updating ui
+      $journalling.currentLogs.unshift({
+        id: $blog.id,
+        log: {
+          title: $blog.title,
+          content: $blog.content,
+          timestamp: timestamp,
+          journal: $journalling.currentJournal,
+        },
+      });
+    }
+
+    goToHome();
+  }
+
+  async function deleteLog() {
+    if ($journalling.updateIndex === -1) {
+      goToHome();
+    }
+
+    try {
+      await del($blog.id, entriesStore);
+    } catch (err) {
+      toast.error("Err while deleting entry from indexeddb");
+      return;
+    }
+
+    $journalling.currentLogs.splice($journalling.updateIndex, 1);
+
+    $journalling.updateIndex = -1;
+    goToHome();
+  }
+
+  interface WorkerApi {
+    encryptLog: (
+      entry: string,
+      pubKey: string
+    ) => Promise<{ encrypted: string }>;
+  }
+  let worker: Worker | undefined;
+  let workerApi: WorkerApi;
+  onMount(() => {
+    worker = new encrypt();
+    workerApi = wrap<WorkerApi>(worker);
+  });
+
+  onDestroy(() => {
+    worker?.terminate();
+  });
 </script>
+
+<Toaster />
 
 <nav class="flex items-center justify-between pb-4 pt-2 px-4">
   {#if writeBlog === false}
     <button
       id="menu"
       on:click={() => (drawerOpen = !drawerOpen)}
-      class="btn btn-circle btn-ghost !rounded-full"
+      class="btn btn-ghost btn-square"
     >
-      {#if drawerOpen === false}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-8 h-8 lucide lucide-chevrons-right"
-          ><path d="m6 17 5-5-5-5" /><path d="m13 17 5-5-5-5" /></svg
-        >
-      {:else}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-8 h-8 lucide lucide-chevrons-left"
-          ><path d="m11 17-5-5 5-5" /><path d="m18 17-5-5 5-5" /></svg
-        >
-      {/if}
+      menu
     </button>
     <p id="date" class="text-xl ml-14 mt-1">
       {new Date().toDateString()}
@@ -83,7 +177,7 @@
     </button>
 
     <div id="operations" class="flex items-center gap-4 mr-4">
-      <button class="btn btn-square btn-warning">
+      <button on:click={deleteLog} class="btn btn-square btn-warning">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"
@@ -105,7 +199,7 @@
           /><line x1="14" x2="14" y1="11" y2="17" /></svg
         >
       </button>
-      <button class="btn btn-square btn-success">
+      <button on:click={saveLog} class="btn btn-square btn-success">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"

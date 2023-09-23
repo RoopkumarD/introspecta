@@ -1,26 +1,14 @@
 <script lang="ts">
+  import { journalling } from "$lib/store";
   import Entry from "./Entry.svelte";
   import SettingModal from "./SettingModal.svelte";
 
-  let journals = ["default", "roop", "das"];
-  let entries: {
-    id: string;
-    title: string;
-    content: string;
-    timestamp: number;
-  }[] = [];
   let showModal = false;
 
-  for (let i = 0; i < 10; i++) {
-    let object = {
-      id: crypto.randomUUID(),
-      title: "Title of entry",
-      content:
-        "COntent of entry which will of few lines and i will clamp them later on and make it samll and very small and i hope to make it more small",
-      timestamp: new Date().getTime(),
-    };
-
-    entries.push(object);
+  function choosedJournal(journal: string) {
+    $journalling.currentJournal = journal;
+    $journalling.currentLogs = $journalling.entries[journal];
+    return;
   }
 </script>
 
@@ -93,7 +81,7 @@
   </div>
   <details class="dropdown my-4">
     <summary class="m-1 btn btn-neutral w-56 flex justify-between"
-      ><span>{journals[0]}</span><span
+      ><span>{$journalling.currentJournal}</span><span
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"
@@ -109,14 +97,25 @@
       ></summary
     >
     <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 ml-1 w-56">
-      {#each journals as journal}
-        <li class="hover:bg-base-200 p-2">{journal}</li>
+      {#each $journalling.journals as journal}
+        <li class="hover:bg-base-200 p-2">
+          <button on:click={() => choosedJournal(journal)}>{journal}</button>
+        </li>
       {/each}
+
+      <li class="hover:bg-base-200 p-2">
+        <span>You can create more journals from settings</span>
+      </li>
     </ul>
   </details>
   <div id="entries" class="h-[calc(100vh-160px)] space-y-2 overflow-y-auto">
-    {#each entries as entry (entry.id)}
-      <Entry {...entry} />
+    {#each $journalling.currentLogs as entry (entry.id)}
+      <Entry
+        id={entry.id}
+        title={entry.log.title}
+        content={entry.log.content}
+        timestamp={entry.log.timestamp}
+      />
     {/each}
   </div>
 </div>
