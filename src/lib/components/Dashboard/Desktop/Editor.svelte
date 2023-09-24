@@ -2,7 +2,7 @@
   import { blog } from "$lib/store";
 </script>
 
-<main class="h-[calc(100vh-80px)] flex flex-col px-4">
+<main class="h-[calc(100vh-66px)] flex flex-col px-4 pt-3">
   <input
     bind:value={$blog.title}
     name="title"

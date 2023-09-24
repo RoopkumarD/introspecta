@@ -24,7 +24,6 @@ interface Journalling {
   updateIndex: number;
   journals: string[];
   entries: entries;
-  currentLogs: entry[];
 }
 
 const journalling = writable<Journalling>({
@@ -33,13 +32,14 @@ const journalling = writable<Journalling>({
   updateIndex: -1,
   journals: [],
   entries: {},
-  currentLogs: [],
 });
 
 const blog = writable({
   id: "",
   title: "",
   content: "",
+  journal: "",
+  writeBlog: false,
 });
 
 export { stage, blog, journalling };

@@ -1,15 +1,53 @@
 <script lang="ts">
   import EnterKey from "./EnterKey.svelte";
   import CreateKey from "./CreateKey.svelte";
+  import { onMount } from "svelte";
 
-  let createKey = true;
+  let createKey = false;
+
+  let themeSelected: boolean;
+
+  function updateTheme() {
+    const one_year = 60 * 60 * 24 * 365;
+
+    if (themeSelected === false) {
+      localStorage.setItem("theme", "cupcake");
+      document.cookie = `theme=cupcake; max-age=${one_year}; path=/; SameSite=Lax`;
+      document.documentElement.setAttribute("data-theme", "cupcake");
+    } else if (themeSelected === true) {
+      localStorage.setItem("theme", "business");
+      document.cookie = `theme=business; max-age=${one_year}; path=/; SameSite=Lax`;
+      document.documentElement.setAttribute("data-theme", "business");
+    }
+  }
+
+  onMount(() => {
+    const theme = localStorage.getItem("theme");
+
+    if (theme === null) {
+      themeSelected = true;
+      localStorage.setItem("theme", "cupcake");
+      const one_year = 60 * 60 * 24 * 365;
+      document.cookie = `theme=cupcake; max-age=${one_year}; path=/; SameSite=Lax`;
+    } else {
+      if (theme === "cupcake") {
+        themeSelected = true;
+      } else if (theme === "business") {
+        themeSelected = false;
+      }
+    }
+  });
 </script>
 
 <nav class="flex justify-between items-center px-4 pt-4 xl:px-8">
   <h1 class="font-abrilFatFace text-xl">introspecta</h1>
   <label class="swap swap-rotate">
     <!-- this hidden checkbox controls the state -->
-    <input type="checkbox" />
+    <input
+      type="checkbox"
+      on:change={updateTheme}
+      bind:checked={themeSelected}
+    />
 
     <!-- sun icon -->
     <svg

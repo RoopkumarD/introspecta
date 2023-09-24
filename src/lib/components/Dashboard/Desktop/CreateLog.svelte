@@ -1,21 +1,18 @@
 <script lang="ts">
-  import { blog } from "$lib/store";
-  export let writeBlog: boolean;
+  import { blog, journalling } from "$lib/store";
 
   function createLog() {
     $blog.id = crypto.randomUUID();
     $blog.title = "";
     $blog.content = "";
+    $blog.journal = $journalling.currentJournal;
 
-    writeBlog = true;
+    $blog.writeBlog = true;
   }
 </script>
 
-<main class="h-[calc(100vh-80px)] flex justify-center items-center">
-  <button
-    on:click={createLog}
-    class="text-4xl drop-shadow p-4 rounded-md flex gap-3 bg-base-200"
-  >
+<main class="h-[calc(100vh-66px)] flex justify-center items-center">
+  <button on:click={createLog} class="text-4xl h-max btn drop-shadow-sm p-4">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="24"
@@ -31,6 +28,6 @@
         d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
       /><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg
     >
-    <span class="font-bold uppercase">Create a log</span>
+    <span class="font-bold">Create a log</span>
   </button>
 </main>

@@ -5,14 +5,14 @@
   import encrypt from "$lib/encrypt?worker";
   import toast, { Toaster } from "svelte-french-toast";
   import { wrap } from "comlink";
-  export let drawerOpen: boolean, writeBlog: boolean;
+  export let drawerOpen: boolean;
 
   function goToHome() {
     $blog.id = "";
     $blog.title = "";
     $blog.content = "";
 
-    writeBlog = false;
+    $blog.writeBlog = false;
   }
 
   const entriesStore = createStore("introspecta", "entries");
@@ -26,8 +26,7 @@
           title: $blog.title,
           content: $blog.content,
           timestamp: timestamp,
-          journal:
-            $journalling.currentLogs[$journalling.updateIndex].log.journal,
+          journal: $blog.journal,
         }),
         $journalling.pubKey
       );
@@ -49,17 +48,19 @@
       }
 
       // updating ui
-      $journalling.currentLogs.splice($journalling.updateIndex, 1);
-      $journalling.currentLogs.unshift({
-        id: $blog.id,
-        log: {
-          title: $blog.title,
-          content: $blog.content,
-          timestamp: timestamp,
-          journal:
-            $journalling.currentLogs[$journalling.updateIndex].log.journal,
+      $journalling.entries[$blog.journal].splice($journalling.updateIndex, 1);
+      $journalling.entries[$blog.journal] = [
+        {
+          id: $blog.id,
+          log: {
+            title: $blog.title,
+            content: $blog.content,
+            timestamp: timestamp,
+            journal: $blog.journal,
+          },
         },
-      });
+        ...$journalling.entries[$blog.journal],
+      ];
 
       $journalling.updateIndex = -1;
     } else {
@@ -81,16 +82,20 @@
       }
 
       // updating ui
-      $journalling.currentLogs.unshift({
-        id: $blog.id,
-        log: {
-          title: $blog.title,
-          content: $blog.content,
-          timestamp: timestamp,
-          journal: $journalling.currentJournal,
+      $journalling.entries[$blog.journal] = [
+        {
+          id: $blog.id,
+          log: {
+            title: $blog.title,
+            content: $blog.content,
+            timestamp: timestamp,
+            journal: $blog.journal,
+          },
         },
-      });
+        ...$journalling.entries[$blog.journal],
+      ];
     }
+    console.log($journalling.entries);
 
     goToHome();
   }
@@ -107,7 +112,7 @@
       return;
     }
 
-    $journalling.currentLogs.splice($journalling.updateIndex, 1);
+    $journalling.entries[$blog.journal].splice($journalling.updateIndex, 1);
 
     $journalling.updateIndex = -1;
     goToHome();
@@ -133,8 +138,10 @@
 
 <Toaster />
 
-<nav class="flex items-center justify-between pb-4 pt-2 px-4">
-  {#if writeBlog === false}
+<nav
+  class="flex items-center justify-between border-b-[1px] border-base-300 pb-2 pt-2 px-4"
+>
+  {#if $blog.writeBlog === false}
     <button
       id="menu"
       on:click={() => (drawerOpen = !drawerOpen)}

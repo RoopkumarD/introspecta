@@ -33,7 +33,6 @@
     $journalling.entries = {
       default: [],
     };
-    $journalling.currentLogs = [];
     $stage = "Dashboard";
   }
 
@@ -78,9 +77,7 @@
   class="font-inter flex flex-col items-center mt-10 lg:mt-24
   "
 >
-  <h1 class="text-black font-bold mb-8 text-2xl lg:text-5xl">
-    Password Generated
-  </h1>
+  <h1 class="font-bold mb-8 text-2xl lg:text-5xl">Password Generated</h1>
   <div
     class="mb-8 py-4 px-2 bg-base-300 flex flex-col lg:flex-row flex-wrap items-center
     justify-center w-3/4 lg:w-1/2 gap-4"

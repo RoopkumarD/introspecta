@@ -2,14 +2,48 @@
   import { journalling } from "$lib/store";
   import Entry from "./Entry.svelte";
   import SettingModal from "./SettingModal.svelte";
+  import { onMount } from "svelte";
 
   let showModal = false;
 
   function choosedJournal(journal: string) {
     $journalling.currentJournal = journal;
-    $journalling.currentLogs = $journalling.entries[journal];
+    console.log($journalling.entries);
     return;
   }
+
+  let themeSelected: boolean;
+
+  function updateTheme() {
+    const one_year = 60 * 60 * 24 * 365;
+
+    if (themeSelected === false) {
+      localStorage.setItem("theme", "cupcake");
+      document.cookie = `theme=cupcake; max-age=${one_year}; path=/; SameSite=Lax`;
+      document.documentElement.setAttribute("data-theme", "cupcake");
+    } else if (themeSelected === true) {
+      localStorage.setItem("theme", "business");
+      document.cookie = `theme=business; max-age=${one_year}; path=/; SameSite=Lax`;
+      document.documentElement.setAttribute("data-theme", "business");
+    }
+  }
+
+  onMount(() => {
+    const theme = localStorage.getItem("theme");
+
+    if (theme === null) {
+      themeSelected = true;
+      localStorage.setItem("theme", "cupcake");
+      const one_year = 60 * 60 * 24 * 365;
+      document.cookie = `theme=cupcake; max-age=${one_year}; path=/; SameSite=Lax`;
+    } else {
+      if (theme === "cupcake") {
+        themeSelected = true;
+      } else if (theme === "business") {
+        themeSelected = false;
+      }
+    }
+  });
 </script>
 
 <SettingModal bind:showModal />
@@ -39,7 +73,11 @@
     <button class="btn btn-circle btn-ghost !rounded-full">
       <label class="swap swap-rotate">
         <!-- this hidden checkbox controls the state -->
-        <input type="checkbox" />
+        <input
+          type="checkbox"
+          on:change={updateTheme}
+          bind:checked={themeSelected}
+        />
 
         <!-- sun icon -->
         <svg
@@ -79,7 +117,7 @@
       </label>
     </button>
   </div>
-  <details class="dropdown my-4">
+  <details class="dropdown my-4 drop-shadow">
     <summary class="m-1 btn btn-neutral w-56 flex justify-between"
       ><span>{$journalling.currentJournal}</span><span
         ><svg
@@ -98,23 +136,27 @@
     >
     <ul class="p-2 shadow menu dropdown-content z-[1] bg-base-100 ml-1 w-56">
       {#each $journalling.journals as journal}
-        <li class="hover:bg-base-200 p-2">
-          <button on:click={() => choosedJournal(journal)}>{journal}</button>
+        <li class="p-2">
+          <button
+            class="rounded-none uppercase"
+            on:click={() => choosedJournal(journal)}>{journal}</button
+          >
         </li>
       {/each}
-
-      <li class="hover:bg-base-200 p-2">
-        <span>You can create more journals from settings</span>
+      <li class="p-2 font-medium">
+        You can create more journals, just go to settings
       </li>
     </ul>
   </details>
   <div id="entries" class="h-[calc(100vh-160px)] space-y-2 overflow-y-auto">
-    {#each $journalling.currentLogs as entry (entry.id)}
+    {#each $journalling.entries[$journalling.currentJournal] as entry, index (entry.id)}
       <Entry
         id={entry.id}
+        {index}
         title={entry.log.title}
         content={entry.log.content}
         timestamp={entry.log.timestamp}
+        journal={entry.log.journal}
       />
     {/each}
   </div>

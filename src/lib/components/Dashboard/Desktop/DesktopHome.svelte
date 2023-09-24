@@ -3,9 +3,9 @@
   import CreateLog from "./CreateLog.svelte";
   import SideBar from "./SideBar.svelte";
   import Editor from "./Editor.svelte";
+  import { blog } from "$lib/store";
 
   let drawerOpen = false;
-  let writeBlog = false;
 </script>
 
 <div
@@ -19,9 +19,9 @@
 <div
   class={`${drawerOpen ? "ml-72" : ""} font-inter duration-200 transition-all`}
 >
-  <DesktopNav bind:drawerOpen bind:writeBlog />
-  {#if writeBlog === false}
-    <CreateLog bind:writeBlog />
+  <DesktopNav bind:drawerOpen />
+  {#if $blog.writeBlog === false}
+    <CreateLog />
   {:else}
     <Editor />
   {/if}

@@ -1,9 +1,27 @@
 <script lang="ts">
-  export let id: string, title: string, content: string, timestamp: number;
+  import { blog } from "$lib/store";
+  import { journalling } from "$lib/store";
+  export let id: string,
+    index: number,
+    title: string,
+    content: string,
+    journal: string,
+    timestamp: number;
+
+  function choosedEntry() {
+    $blog.id = id;
+    $blog.title = title;
+    $blog.content = content;
+    $blog.journal = journal;
+
+    $journalling.updateIndex = index;
+
+    $blog.writeBlog = true;
+  }
 </script>
 
-<div id="card" class="p-2 space-y-1 bg-base-100 hover:bg-base-200 rounded-md">
-  <p class="font-semibold text-md">{title}</p>
-  <p class="line-clamp-2 text-sm">{content}</p>
-  <p class="font-light text-xs">{new Date(timestamp).toDateString()}</p>
-</div>
+<button on:click={choosedEntry} class="btn text-left w-full p-4 h-min">
+  <span class="font-bold w-full line-clamp-1">{title}</span>
+  <span class="font-normal w-full line-clamp-2">{content}</span>
+  <span class="font-light w-full">{new Date(timestamp).toDateString()}</span>
+</button>
