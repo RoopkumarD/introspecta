@@ -1,10 +1,97 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
+  import decrypt from "$lib/decrypt?worker";
   import Input from "./Input.svelte";
+  import { wrap } from "comlink";
+  import { values } from "idb-keyval";
+  import toast, { Toaster } from "svelte-french-toast";
+  import { stage, journalling } from "$lib/store";
+  import { createStore } from "idb-keyval";
 
   export let createKey: boolean;
 
-  let passphrase = Array(5).fill("");
+  interface EncryptedEntries {
+    id: string;
+    entry: {
+      encrypted: string;
+    };
+  }
+
+  interface entry {
+    id: string;
+    log: {
+      title: string;
+      content: string;
+      timestamp: number;
+      journal: string;
+    };
+  }
+
+  interface DecryptedEntries {
+    [journalName: string]: entry[];
+  }
+
+  interface WorkerApi {
+    decrypt: (
+      passphrase: string,
+      encryptedEntries: EncryptedEntries[]
+    ) => Promise<{ decryptedEntries: DecryptedEntries }>;
+
+    generateKeyPairs: (passphrase: string) => Promise<{ publicKey: string }>;
+  }
+
+  let worker: Worker | undefined;
+  let workerApi: WorkerApi;
+
+  const entriesStore = createStore("introspecta", "entries");
+  async function unlockDiary() {
+    if (passphraseEmpty()) {
+      toast.error("Bro give me full pass");
+      return;
+    }
+
+    // checking if passphrase is correct or not
+    const genPubKey = await workerApi.generateKeyPairs(passphrase.join(""));
+    if (genPubKey.publicKey !== pubKey) {
+      toast.error("Password isn't matching with saved one");
+      return;
+    }
+
+    // if user gave pass and it matched, thus correct pass and now we will start decryption
+    const encryptedEntries: EncryptedEntries[] = await values(entriesStore);
+    const { decryptedEntries } = await workerApi.decrypt(
+      passphrase.join(""),
+      encryptedEntries
+    );
+
+    // now initialising the workspace
+    const arrObject = Object.entries(decryptedEntries);
+
+    if (arrObject.length !== 0) {
+      $journalling.currentJournal = arrObject[0][0];
+      $journalling.journals = Object.keys(decryptedEntries);
+      $journalling.entries = decryptedEntries;
+    } else {
+      $journalling.currentJournal = "default";
+      $journalling.journals = ["default"];
+      $journalling.entries = { default: [] };
+    }
+
+    $journalling.pubKey = pubKey;
+    $stage = "Dashboard";
+  }
+
+  function passphraseEmpty() {
+    for (let i = 0; i < 5; i++) {
+      if (passphrase[i].length === 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  let passphrase: string[] = Array(5).fill("");
   let noPubKeyDialog: HTMLDialogElement;
 
   let pubKey: string | null;
@@ -14,8 +101,17 @@
     if (pubKey === null) {
       pubKeyDisabled = true;
     }
+
+    worker = new decrypt();
+    workerApi = wrap<WorkerApi>(worker);
+  });
+
+  onDestroy(() => {
+    worker?.terminate();
   });
 </script>
+
+<Toaster />
 
 <dialog class="modal" bind:this={noPubKeyDialog}>
   <div class="modal-box w-max flex flex-col items-center">
@@ -50,8 +146,10 @@
         >you can't open journals, click to know</button
       >
     {/if}
-    <button disabled={pubKeyDisabled} class="btn btn-primary btn-wide text-xl"
-      >unlock</button
+    <button
+      on:click={unlockDiary}
+      disabled={pubKeyDisabled}
+      class="btn btn-primary btn-wide text-xl">unlock</button
     >
     <div class="divider">OR</div>
     <button

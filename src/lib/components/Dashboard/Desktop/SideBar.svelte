@@ -8,7 +8,6 @@
 
   function choosedJournal(journal: string) {
     $journalling.currentJournal = journal;
-    console.log($journalling.entries);
     return;
   }
 
