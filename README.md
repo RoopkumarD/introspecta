@@ -4,6 +4,8 @@ Introspecta is a tool/platform that allows you to journal your life with complet
 
 Think of this app as a digital diary with a lock and key. When you create an account, you receive a set of passphrases that you'll use to access your journal every time you visit the app. These same passphrases encrypt all your entries, and I don't store them anywhere. If you lose them, I won't be able to help you recover your keys. This app provides a safe haven where your entries remain confidential, even from me.
 
+![thumbnail](https://github.com/RoopkumarD/introspecta/assets/120183778/4f612466-7094-4b98-87b0-188d3af4200d)
+
 ## Getting Started
 
 When you first visit the app, you'll encounter an "Enter Key" screen. This is where you provide the key to unlock your diary. Since you don't have account, you can click on "Create a New Account," and there you'll see that it generates five words to serve as your passphrase. This passphrase encrypts all your logs.
