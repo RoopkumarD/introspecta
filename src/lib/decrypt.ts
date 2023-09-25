@@ -3,9 +3,7 @@ import sodium, { ready as sodiumReady } from "libsodium-wrappers";
 
 interface EncryptedEntries {
   id: string;
-  entry: {
-    encrypted: string;
-  };
+  entry: string;
 }
 
 interface DecryptedLogs {
@@ -95,7 +93,7 @@ async function decryptingAllLogs(
   const decrypted: DecryptedLogs[] = [];
 
   for (let i = 0; i < length; i++) {
-    const encryptedBuf = sodium.from_hex(logs[i].entry.encrypted);
+    const encryptedBuf = sodium.from_hex(logs[i].entry);
     const decryptedTextBuf = sodium.crypto_box_seal_open(
       encryptedBuf,
       publicKey,

@@ -12,9 +12,7 @@
 
   interface EncryptedEntries {
     id: string;
-    entry: {
-      encrypted: string;
-    };
+    entry: string;
   }
 
   interface entry {

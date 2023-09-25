@@ -21,7 +21,7 @@
     const timestamp = new Date().getTime();
 
     if ($journalling.updateIndex !== -1) {
-      const encrypted = await workerApi.encryptLog(
+      const { encrypted } = await workerApi.encryptLog(
         JSON.stringify({
           title: $blog.title,
           content: $blog.content,
@@ -64,7 +64,7 @@
 
       $journalling.updateIndex = -1;
     } else {
-      const encrypted = await workerApi.encryptLog(
+      const { encrypted } = await workerApi.encryptLog(
         JSON.stringify({
           title: $blog.title,
           content: $blog.content,

@@ -69,7 +69,7 @@
       </div>
       <p class="underline">Delete journal:</p>
       <p class="mb-2">
-        App will automatically delte the journal, if the journal is empty
+        App will automatically delete the journal, if the journal is empty
       </p>
 
       <h1 class="font-bold text-xl mb-2 border-b-[1px] border-base-300">
