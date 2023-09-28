@@ -1,11 +1,17 @@
 <script lang="ts">
-  import { blog, journalling } from "$lib/store";
-  import { createStore, del, set, update } from "idb-keyval";
+  import { blog } from "$lib/store";
   import { onMount, onDestroy } from "svelte";
   import encrypt from "$lib/encrypt?worker";
-  import toast, { Toaster } from "svelte-french-toast";
+  import { Toaster } from "svelte-french-toast";
   import { wrap } from "comlink";
+
+  import SaveEntry from "./SaveEntry.svelte";
+  import DeleteEntry from "./DeleteEntry.svelte";
+  import SyncEntries from "./SyncEntries.svelte";
+
   export let drawerOpen: boolean;
+
+  let syncModalShow = false;
 
   function goToHome() {
     $blog.id = "";
@@ -15,112 +21,9 @@
     $blog.writeBlog = false;
   }
 
-  const entriesStore = createStore("introspecta", "entries");
-
-  async function saveLog() {
-    const timestamp = new Date().getTime();
-
-    if ($journalling.updateIndex !== -1) {
-      const { encrypted } = await workerApi.encryptLog(
-        JSON.stringify({
-          title: $blog.title,
-          content: $blog.content,
-          timestamp: timestamp,
-          journal: $blog.journal,
-        }),
-        $journalling.pubKey
-      );
-
-      try {
-        await update(
-          $blog.id,
-          (val) => {
-            return {
-              id: $blog.id,
-              entry: encrypted,
-            };
-          },
-          entriesStore
-        );
-      } catch (err) {
-        toast.error("Err while saving entry to indexeddb");
-        return;
-      }
-
-      // updating ui
-      $journalling.entries[$blog.journal].splice($journalling.updateIndex, 1);
-      $journalling.entries[$blog.journal] = [
-        {
-          id: $blog.id,
-          log: {
-            title: $blog.title,
-            content: $blog.content,
-            timestamp: timestamp,
-            journal: $blog.journal,
-          },
-        },
-        ...$journalling.entries[$blog.journal],
-      ];
-
-      $journalling.updateIndex = -1;
-    } else {
-      const { encrypted } = await workerApi.encryptLog(
-        JSON.stringify({
-          title: $blog.title,
-          content: $blog.content,
-          timestamp: timestamp,
-          journal: $journalling.currentJournal,
-        }),
-        $journalling.pubKey
-      );
-
-      try {
-        await set($blog.id, { id: $blog.id, entry: encrypted }, entriesStore);
-      } catch (err) {
-        toast.error("Err while saving entry to indexeddb");
-        return;
-      }
-
-      // updating ui
-      $journalling.entries[$blog.journal] = [
-        {
-          id: $blog.id,
-          log: {
-            title: $blog.title,
-            content: $blog.content,
-            timestamp: timestamp,
-            journal: $blog.journal,
-          },
-        },
-        ...$journalling.entries[$blog.journal],
-      ];
-    }
-    console.log($journalling.entries);
-
-    goToHome();
-  }
-
-  async function deleteLog() {
-    if ($journalling.updateIndex === -1) {
-      goToHome();
-    }
-
-    try {
-      await del($blog.id, entriesStore);
-    } catch (err) {
-      toast.error("Err while deleting entry from indexeddb");
-      return;
-    }
-
-    $journalling.entries[$blog.journal].splice($journalling.updateIndex, 1);
-
-    $journalling.updateIndex = -1;
-    goToHome();
-  }
-
   interface WorkerApi {
     encryptLog: (
-      entry: string,
+      entry: Buffer,
       pubKey: string
     ) => Promise<{ encrypted: string }>;
   }
@@ -138,6 +41,8 @@
 
 <Toaster />
 
+<SyncEntries bind:syncModalShow />
+
 <nav
   class="flex items-center justify-between border-b-[1px] border-base-300 pb-2 pt-2 px-4"
 >
@@ -152,7 +57,7 @@
     <p id="date" class="text-xl ml-14 mt-1">
       {new Date().toDateString()}
     </p>
-    <button class="btn btn-sm text-xl">
+    <button on:click={() => (syncModalShow = true)} class="btn btn-sm text-xl">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="24"
@@ -184,47 +89,8 @@
     </button>
 
     <div id="operations" class="flex items-center gap-4 mr-4">
-      <button on:click={deleteLog} class="btn btn-square btn-warning">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="lucide lucide-trash-2"
-          ><path d="M3 6h18" /><path
-            d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
-          /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line
-            x1="10"
-            x2="10"
-            y1="11"
-            y2="17"
-          /><line x1="14" x2="14" y1="11" y2="17" /></svg
-        >
-      </button>
-      <button on:click={saveLog} class="btn btn-square btn-success">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="lucide lucide-save"
-          ><path
-            d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
-          /><polyline points="17 21 17 13 7 13 7 21" /><polyline
-            points="7 3 7 8 15 8"
-          /></svg
-        >
-      </button>
+      <DeleteEntry />
+      <SaveEntry encryptLog={workerApi.encryptLog} />
     </div>
   {/if}
 </nav>
