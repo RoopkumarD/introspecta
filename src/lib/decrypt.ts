@@ -1,9 +1,11 @@
 import { expose } from "comlink";
 import sodium, { ready as sodiumReady } from "libsodium-wrappers";
+// import { decode } from "msgpack-lite";
+import { unpack } from "msgpackr";
 
 interface EncryptedEntries {
   id: string;
-  entry: string;
+  entry: Uint8Array;
 }
 
 interface DecryptedLogs {
@@ -88,21 +90,18 @@ async function decryptingAllLogs(
   privateKey: Uint8Array,
   logs: EncryptedEntries[],
 ) {
-  const decorder = new TextDecoder();
   const length = logs.length;
   const decrypted: DecryptedLogs[] = [];
 
   for (let i = 0; i < length; i++) {
-    const encryptedBuf = sodium.from_hex(logs[i].entry);
     const decryptedTextBuf = sodium.crypto_box_seal_open(
-      encryptedBuf,
+      logs[i].entry,
       publicKey,
       privateKey,
     );
-    let decryptedLogText = decorder.decode(decryptedTextBuf);
     decrypted.push({
       id: logs[i].id,
-      log: JSON.parse(decryptedLogText),
+      log: unpack(decryptedTextBuf),
     });
   }
 

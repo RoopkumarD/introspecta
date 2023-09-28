@@ -12,7 +12,7 @@
 
   interface EncryptedEntries {
     id: string;
-    entry: string;
+    entry: Uint8Array;
   }
 
   interface entry {
