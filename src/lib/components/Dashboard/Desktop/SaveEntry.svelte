@@ -95,9 +95,11 @@
       ];
     }
 
-    const changeArr = localStorage.getItem("changes") as string[] | null;
+    const changeArr: string | null = localStorage.getItem("changes");
     if (changeArr !== null) {
-      changeArr.push($blog.id);
+      const arr: string[] = JSON.parse(changeArr);
+      arr.push($blog.id);
+      localStorage.setItem("changes", JSON.stringify(arr));
     }
 
     // going to back to home

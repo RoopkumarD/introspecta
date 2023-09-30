@@ -26,9 +26,11 @@
 
     $journalling.updateIndex = -1;
 
-    const deleteArr = localStorage.getItem("deletes") as string[] | null;
+    const deleteArr: string | null = localStorage.getItem("deletes");
     if (deleteArr !== null) {
-      deleteArr.push($blog.id);
+      const arr: string[] = JSON.parse(deleteArr);
+      arr.push($blog.id);
+      localStorage.setItem("deletes", JSON.stringify(arr));
     }
 
     // going back to home
