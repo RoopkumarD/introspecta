@@ -34,6 +34,10 @@ const journalling = writable<Journalling>({
   entries: {},
 });
 
+const sync = writable({
+  accessToken: "",
+});
+
 const blog = writable({
   id: "",
   title: "",
@@ -42,4 +46,4 @@ const blog = writable({
   writeBlog: false,
 });
 
-export { stage, blog, journalling };
+export { stage, blog, journalling, sync };
