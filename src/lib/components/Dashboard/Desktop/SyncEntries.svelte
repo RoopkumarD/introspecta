@@ -137,21 +137,21 @@
     // lastSyncTime in entries are in unix timestamp
     // whereas lastTimeSynced is in data string format, as i didn't really converted it when got back from drive
 
-    const promises = keyIds.map(async (id) => {
-      await update(
-        id,
-        (val) => {
-          return {
-            ...val,
-            lastSyncTime: timestamp,
-          };
-        },
-        entriesStore
-      );
-    });
-
     try {
-      await Promise.all(promises);
+      await Promise.all(
+        keyIds.map((id) => {
+          return update(
+            id,
+            (val) => {
+              return {
+                ...val,
+                lastSyncTime: timestamp,
+              };
+            },
+            entriesStore
+          );
+        })
+      );
     } catch (err) {
       console.error(err);
       errMessage =
@@ -354,7 +354,29 @@
 
     // lastly sending it server to save
     const finalData = await values(entriesStore);
-    console.log(finalData);
+
+    // uploading to drive
+    const response = await fetch("/api/updateData", {
+      method: "POST",
+      body: pack({
+        accessToken: $sync.accessToken,
+        fileId: fileId,
+        data: finalData,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const { modifiedTime } = await response.json();
+
+    // setting back stuff
+    localStorage.setItem("lastSyncTime", modifiedTime);
+    localStorage.setItem("newArr", JSON.stringify([]));
+    localStorage.setItem("updateArr", JSON.stringify([]));
+
+    state = changeState(state, "successSync");
+    return;
   }
 
   function getOldKeys(allKeys: string[], newKeys: string[]) {
