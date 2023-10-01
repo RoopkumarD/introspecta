@@ -26,11 +26,26 @@
 
     $journalling.updateIndex = -1;
 
-    const deleteArr: string | null = localStorage.getItem("deletes");
-    if (deleteArr !== null) {
-      const arr: string[] = JSON.parse(deleteArr);
-      arr.push($blog.id);
-      localStorage.setItem("deletes", JSON.stringify(arr));
+    const updateArr: string | null = localStorage.getItem("updateArr");
+    if (updateArr !== null) {
+      const arr: string[] = JSON.parse(updateArr);
+
+      const index = arr.indexOf($blog.id);
+      if (index !== -1) {
+        arr.splice(index, 1);
+        localStorage.setItem("updateArr", JSON.stringify(arr));
+      }
+    }
+
+    const newArr: string | null = localStorage.getItem("newArr");
+    if (newArr !== null) {
+      const arr: string[] = JSON.parse(newArr);
+
+      const index = arr.indexOf($blog.id);
+      if (index !== -1) {
+        arr.splice(index, 1);
+        localStorage.setItem("newArr", JSON.stringify(arr));
+      }
     }
 
     // going back to home

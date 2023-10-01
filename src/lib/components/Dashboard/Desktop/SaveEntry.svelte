@@ -32,7 +32,7 @@
             return {
               id: $blog.id,
               entry: encrypted,
-              lastSyncTime: null,
+              lastSyncTime: val.lastSyncTime,
             };
           },
           entriesStore
@@ -58,6 +58,13 @@
       ];
 
       $journalling.updateIndex = -1;
+
+      const updateArr: string | null = localStorage.getItem("updateArr");
+      if (updateArr !== null) {
+        const arr: string[] = JSON.parse(updateArr);
+        arr.push($blog.id);
+        localStorage.setItem("updateArr", JSON.stringify(arr));
+      }
     } else {
       const { encrypted } = await encryptLog(
         pack({
@@ -93,13 +100,13 @@
         },
         ...$journalling.entries[$blog.journal],
       ];
-    }
 
-    const changeArr: string | null = localStorage.getItem("changes");
-    if (changeArr !== null) {
-      const arr: string[] = JSON.parse(changeArr);
-      arr.push($blog.id);
-      localStorage.setItem("changes", JSON.stringify(arr));
+      const newArr: string | null = localStorage.getItem("newArr");
+      if (newArr !== null) {
+        const arr: string[] = JSON.parse(newArr);
+        arr.push($blog.id);
+        localStorage.setItem("newArr", JSON.stringify(arr));
+      }
     }
 
     // going to back to home

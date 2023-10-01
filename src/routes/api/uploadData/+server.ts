@@ -31,10 +31,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const toDelFolderId = data.folderId;
   authValidator.setCredentials({ access_token: accessToken });
 
-  const uploadFile = pack({
-    data: data.data,
-    deletes: [],
-  });
+  const uploadFile = pack(data.data);
 
   const bufferStream = new Readable();
   bufferStream.push(uploadFile);

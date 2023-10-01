@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { createStore, keys, update, values } from "idb-keyval";
+  import {
+    createStore,
+    keys,
+    setMany,
+    update,
+    values,
+    delMany,
+  } from "idb-keyval";
   import { pack, unpack } from "msgpackr";
   import { journalling, sync } from "$lib/store";
 
@@ -91,8 +98,8 @@
     if (
       localStorage.getItem("lastSyncTime") === null ||
       localStorage.getItem("fileId") === null ||
-      localStorage.getItem("changes") === null ||
-      localStorage.getItem("deletes") === null
+      localStorage.getItem("newArr") === null ||
+      localStorage.getItem("updateArr") === null
     ) {
       // first checking if existing data is present on drive or not
       try {
@@ -175,12 +182,13 @@
       const { fileId, modifiedTime } = await response.json();
       localStorage.setItem("fileId", fileId);
       localStorage.setItem("lastSyncTime", modifiedTime);
-      localStorage.setItem("changes", JSON.stringify([]));
-      localStorage.setItem("deletes", JSON.stringify([]));
+      localStorage.setItem("newArr", JSON.stringify([]));
+      localStorage.setItem("updateArr", JSON.stringify([]));
 
       state = changeState(state, "successSync");
       return;
     } catch (err) {
+      console.error(err);
       errMessage = "Err while checking if there is any previous data or not";
       state = changeState(state, "errWhileSync");
       return;
@@ -188,17 +196,17 @@
   }
 
   async function existingDataSync() {
-    const changes = localStorage.getItem("changes");
+    const newArrString = localStorage.getItem("newArr");
 
-    const deletes = localStorage.getItem("deletes");
+    const updateArrString = localStorage.getItem("updateArr");
 
     const fileId = localStorage.getItem("fileId");
 
     const lastSyncTime = localStorage.getItem("lastSyncTime");
 
     if (
-      changes === null ||
-      deletes === null ||
+      newArrString === null ||
+      updateArrString === null ||
       fileId === null ||
       lastSyncTime === null
     ) {
@@ -207,27 +215,158 @@
       state = changeState(state, "errWhileSync");
       return;
     }
-    let changesArr: string[] = JSON.parse(changes);
-    let deletesArr: string[] = JSON.parse(deletes);
+    let newArr: string[] = JSON.parse(newArrString);
+    let updateArr: string[] = JSON.parse(updateArrString);
+    const unixLastSyncTime = new Date(lastSyncTime).getTime();
 
-    // retrieving data for checking if changes or not
-    // also retrieving as i want the delete array so that i can append new stuff
+    interface RetrieveData {
+      id: string;
+      entry: Uint8Array;
+      lastSyncTime: number;
+    }
+
+    let retrieveData: RetrieveData[] = [];
+    let fileIsModified: boolean;
+
+    // first checking if there are updates or not
     try {
       const response = await fetch("/api/retrieveData", {
         method: "POST",
         body: JSON.stringify({
           accessToken: $sync.accessToken,
           fileId: fileId,
+          lastSyncTime: lastSyncTime,
         }),
         headers: {
           "Content-Type": "application/json",
         },
       });
+
+      const data = await response.arrayBuffer();
+      const deserialisedData: {
+        data: RetrieveData[];
+        fileIsModified: boolean;
+      } = unpack(new Uint8Array(data));
+
+      retrieveData = deserialisedData.data;
+      fileIsModified = deserialisedData.fileIsModified;
     } catch (err) {
+      console.error(err);
       errMessage = "Err while trying to retrieve data for existing data sync";
       state = changeState(state, "errWhileSync");
       return;
     }
+
+    // this takes care of syncing with changes of drive
+    if (fileIsModified === true) {
+      // then updating the local data
+      const oldKeys: string[] = getOldKeys(await keys(entriesStore), newArr);
+      const driveKeys = retrieveData.map((entry) => {
+        return entry.id;
+      });
+
+      // this handles deleting all the entry according to drive data state
+      let deleteArr = [];
+
+      for (let id of oldKeys) {
+        if (!driveKeys.includes(id)) {
+          const updateArrIndex = updateArr.indexOf(id);
+          if (updateArrIndex !== -1) {
+            updateArr.splice(updateArrIndex, 1);
+          }
+
+          deleteArr.push(id);
+        }
+      }
+
+      // now adding or updating data from drive data
+      let updates: [string, RetrieveData][] = [];
+
+      for (let entry of retrieveData) {
+        if (entry.lastSyncTime > unixLastSyncTime) {
+          const updateArrIndex = updateArr.indexOf(entry.id);
+          if (updateArrIndex !== -1) {
+            updateArr.splice(updateArrIndex, 1);
+          }
+          updates.push([entry.id, entry]);
+        }
+      }
+
+      if (updates.length !== 0) {
+        // updating each local data
+        try {
+          await setMany(updates, entriesStore);
+        } catch (err) {
+          console.error(err);
+          errMessage =
+            "Err while updating local data, in case of file is modified";
+          state = changeState(state, "errWhileSync");
+          return;
+        }
+      }
+
+      if (deleteArr.length !== 0) {
+        // now deleting entries
+        try {
+          await delMany(deleteArr);
+        } catch (err) {
+          console.error(err);
+          errMessage =
+            "Err while deleting local data, in case of file is modified";
+          state = changeState(state, "errWhileSync");
+          return;
+        }
+      }
+    }
+
+    // after sync done with drive data
+    const timestamp = new Date().getTime();
+
+    await Promise.all(
+      newArr.map((id) => {
+        return update(
+          id,
+          (val) => {
+            return {
+              ...val,
+              lastSyncTime: timestamp,
+            };
+          },
+          entriesStore
+        );
+      })
+    );
+
+    await Promise.all(
+      updateArr.map((id) => {
+        return update(
+          id,
+          (val) => {
+            return {
+              ...val,
+              lastSyncTime: timestamp,
+            };
+          },
+          entriesStore
+        );
+      })
+    );
+
+    // lastly sending it server to save
+    const finalData = await values(entriesStore);
+    console.log(finalData);
+  }
+
+  function getOldKeys(allKeys: string[], newKeys: string[]) {
+    let arr = [];
+
+    for (let id of allKeys) {
+      if (!newKeys.includes(id)) {
+        arr.push(id);
+      }
+    }
+
+    return arr;
   }
 
   let syncModal: HTMLDialogElement;
