@@ -8,19 +8,13 @@
     delMany,
   } from "idb-keyval";
   import { pack, unpack } from "msgpackr";
-  import { journalling, sync } from "$lib/store";
+  import { journalling, sync, stage } from "$lib/store";
 
   export let syncModalShow: boolean;
 
   interface States {
     [stateName: string]: {
-      [actionName: string]:
-        | "login"
-        | "syncPrompt"
-        | "syncing"
-        | "deleteExistingData"
-        | "doneSync"
-        | "errShow";
+      [actionName: string]: State;
     };
   }
 
@@ -34,6 +28,7 @@
     },
     syncing: {
       successSync: "doneSync",
+      successSyncWithUpdate: "doneSyncWithUpdate",
       errWhileSync: "errShow",
       previousExisitingData: "deleteExistingData",
     },
@@ -42,6 +37,7 @@
       changeAccount: "login",
     },
     doneSync: {}, // only close button exists in this state
+    doneSyncWithUpdate: {}, // only close button exists in this state
     errShow: {}, // only close button exists in this state
   };
 
@@ -51,15 +47,13 @@
     | "syncing"
     | "deleteExistingData"
     | "doneSync"
+    | "doneSyncWithUpdate"
     | "errShow";
 
   let state: State = "login";
 
   // to show err message in errShow state
   let errMessage = "";
-
-  // to ask user to refresh if changes introduce while syncing
-  let updateToLocalData = false;
 
   // folderId for new upload if existing data is there
   let folderIdVal = "";
@@ -114,7 +108,7 @@
         const { dataExists, folderId } = await response.json();
         if (dataExists === true) {
           folderIdVal = folderId;
-          state = changeState(state, "deleteExistingData");
+          state = changeState(state, "previousExisitingData");
           return;
         } else if (dataExists === false) {
           folderIdVal = "";
@@ -260,7 +254,15 @@
     // this takes care of syncing with changes of drive
     if (fileIsModified === true) {
       // then updating the local data
-      const oldKeys: string[] = getOldKeys(await keys(entriesStore), newArr);
+      const allKeys = await keys(entriesStore);
+      let oldKeys: string[] = [];
+
+      for (let id of allKeys) {
+        if (!newArr.includes(id)) {
+          oldKeys.push(id);
+        }
+      }
+
       const driveKeys = retrieveData.map((entry) => {
         return entry.id;
       });
@@ -375,20 +377,13 @@
     localStorage.setItem("newArr", JSON.stringify([]));
     localStorage.setItem("updateArr", JSON.stringify([]));
 
-    state = changeState(state, "successSync");
-    return;
-  }
-
-  function getOldKeys(allKeys: string[], newKeys: string[]) {
-    let arr = [];
-
-    for (let id of allKeys) {
-      if (!newKeys.includes(id)) {
-        arr.push(id);
-      }
+    if (fileIsModified === true) {
+      state = changeState(state, "successSyncWithUpdate");
+    } else {
+      state = changeState(state, "successSync");
     }
 
-    return arr;
+    return;
   }
 
   let syncModal: HTMLDialogElement;
@@ -475,6 +470,29 @@
         <p>Err message: {errMessage}</p>
       </div>
     {/if}
+    {#if state === "doneSyncWithUpdate"}
+      <div class="flex justify-end w-full">
+        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
+          >close</button
+        >
+      </div>
+      <div class="flex flex-col justify-center items-center">
+        <strong> Done Syncing :) </strong>
+        <p>
+          I found some changes while syncing, please relogin with button below
+          to affect the changes
+        </p>
+        <button
+          on:click={() => {
+            $stage = "Login";
+            return;
+          }}
+          class="btn-secondary btn"
+        >
+          Relogin
+        </button>
+      </div>
+    {/if}
     {#if state === "doneSync"}
       <div class="flex justify-end w-full">
         <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
@@ -483,12 +501,6 @@
       </div>
       <div class="flex flex-col justify-center items-center">
         <strong> Done Syncing :) </strong>
-        {#if updateToLocalData === false}
-          <p>
-            I found some changes while syncing, refresh the page to see the
-            effects
-          </p>
-        {/if}
       </div>
     {/if}
     {#if state === "deleteExistingData"}

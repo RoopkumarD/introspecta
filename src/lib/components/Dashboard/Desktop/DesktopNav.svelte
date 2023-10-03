@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { blog } from "$lib/store";
+  import { blog, journalling } from "$lib/store";
   import { onMount, onDestroy } from "svelte";
   import encrypt from "$lib/encrypt?worker";
   import { Toaster } from "svelte-french-toast";
@@ -17,6 +17,7 @@
     $blog.id = "";
     $blog.title = "";
     $blog.content = "";
+    $journalling.updateIndex = -1;
 
     $blog.writeBlog = false;
   }
