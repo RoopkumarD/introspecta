@@ -178,6 +178,7 @@
       localStorage.setItem("lastSyncTime", modifiedTime);
       localStorage.setItem("newArr", JSON.stringify([]));
       localStorage.setItem("updateArr", JSON.stringify([]));
+      localStorage.setItem("deleteArr", JSON.stringify([]));
 
       state = changeState(state, "successSync");
       return;
@@ -194,6 +195,8 @@
 
     const updateArrString = localStorage.getItem("updateArr");
 
+    const deleteArrString = localStorage.getItem("deleteArr");
+
     const fileId = localStorage.getItem("fileId");
 
     const lastSyncTime = localStorage.getItem("lastSyncTime");
@@ -201,6 +204,7 @@
     if (
       newArrString === null ||
       updateArrString === null ||
+      deleteArrString === null ||
       fileId === null ||
       lastSyncTime === null
     ) {
@@ -211,6 +215,7 @@
     }
     let newArr: string[] = JSON.parse(newArrString);
     let updateArr: string[] = JSON.parse(updateArrString);
+    let localDeleteArr: string[] = JSON.parse(deleteArrString);
     const unixLastSyncTime = new Date(lastSyncTime).getTime();
 
     interface RetrieveData {
@@ -221,6 +226,7 @@
 
     let retrieveData: RetrieveData[] = [];
     let fileIsModified: boolean;
+    let driveModifiedTime: string = "";
 
     // first checking if there are updates or not
     try {
@@ -240,10 +246,12 @@
       const deserialisedData: {
         data: RetrieveData[];
         fileIsModified: boolean;
+        modifiedTime: string;
       } = unpack(new Uint8Array(data));
 
       retrieveData = deserialisedData.data;
       fileIsModified = deserialisedData.fileIsModified;
+      driveModifiedTime = deserialisedData.modifiedTime;
     } catch (err) {
       console.error(err);
       errMessage = "Err while trying to retrieve data for existing data sync";
@@ -254,7 +262,7 @@
     // this takes care of syncing with changes of drive
     if (fileIsModified === true) {
       // then updating the local data
-      const allKeys = await keys(entriesStore);
+      const allKeys: string[] = await keys(entriesStore);
       let oldKeys: string[] = [];
 
       for (let id of allKeys) {
@@ -319,6 +327,9 @@
           return;
         }
       }
+
+      // updating modified time as drive one
+      localStorage.setItem("lastSyncTime", driveModifiedTime);
     }
 
     // after sync done with drive data
@@ -354,26 +365,32 @@
       })
     );
 
-    // lastly sending it server to save
-    const finalData = await values(entriesStore);
+    if (
+      updateArr.length !== 0 ||
+      newArr.length !== 0 ||
+      localDeleteArr.length !== 0
+    ) {
+      const finalData = await values(entriesStore);
 
-    // uploading to drive
-    const response = await fetch("/api/updateData", {
-      method: "POST",
-      body: pack({
-        accessToken: $sync.accessToken,
-        fileId: fileId,
-        data: finalData,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+      // uploading to drive
+      const response = await fetch("/api/updateData", {
+        method: "POST",
+        body: pack({
+          accessToken: $sync.accessToken,
+          fileId: fileId,
+          data: finalData,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    const { modifiedTime } = await response.json();
+      const { modifiedTime } = await response.json();
 
-    // setting back stuff
-    localStorage.setItem("lastSyncTime", modifiedTime);
+      // setting back stuff
+      localStorage.setItem("lastSyncTime", modifiedTime);
+    }
+
     localStorage.setItem("newArr", JSON.stringify([]));
     localStorage.setItem("updateArr", JSON.stringify([]));
 

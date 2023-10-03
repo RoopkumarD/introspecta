@@ -38,6 +38,7 @@
     }
 
     const newArr: string | null = localStorage.getItem("newArr");
+    const deleteArr: string | null = localStorage.getItem("deleteArr");
     if (newArr !== null) {
       const arr: string[] = JSON.parse(newArr);
 
@@ -45,6 +46,15 @@
       if (index !== -1) {
         arr.splice(index, 1);
         localStorage.setItem("newArr", JSON.stringify(arr));
+      }
+
+      if (deleteArr !== null) {
+        const delArr: string[] = JSON.parse(deleteArr);
+
+        if (!arr.includes($blog.id)) {
+          delArr.push($blog.id);
+          localStorage.setItem("deleteArr", JSON.stringify(delArr));
+        }
       }
     }
 
