@@ -10,7 +10,7 @@ export const POST: RequestHandler = async ({ request }) => {
   const { accessToken, fileId, lastSyncTime } = await request.json();
   authValidator.setCredentials({ access_token: accessToken });
 
-  const fileIsModified = await checkIfModifiedOrNot(
+  const { fileIsModified, modifiedTime } = await checkIfModifiedOrNot(
     fileId,
     lastSyncTime,
     authValidator,
@@ -23,6 +23,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const resBuf = pack({
       data: unpack(UintArrBuf),
       fileIsModified: true,
+      modifiedTime: modifiedTime,
     });
 
     return new Response(resBuf, {
@@ -34,6 +35,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const resBuf = pack({
       data: [],
       fileIsModified: false,
+      modifiedTime: modifiedTime,
     });
     return new Response(resBuf, {
       headers: {
@@ -64,9 +66,15 @@ async function checkIfModifiedOrNot(
     const localModifiedTime = new Date(lastSyncTime).getTime();
 
     if (driveModifiedTime > localModifiedTime) {
-      return true;
+      return {
+        fileIsModified: true,
+        modifiedTime: res.data.modifiedTime,
+      };
     } else {
-      return false;
+      return {
+        fileIsModified: false,
+        modifiedTime: res.data.modifiedTime,
+      };
     }
   } catch (err) {
     throw err;

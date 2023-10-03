@@ -89,6 +89,7 @@
           localStorage.setItem("fileId", deserialisedData.fileId);
           localStorage.setItem("newArr", JSON.stringify([]));
           localStorage.setItem("updateArr", JSON.stringify([]));
+          localStorage.setItem("deleteArr", JSON.stringify([]));
           localStorage.setItem("pubKey", pubKey);
 
           let idbData: [string, EncryptedEntries][] = deserialisedData.data.map(
