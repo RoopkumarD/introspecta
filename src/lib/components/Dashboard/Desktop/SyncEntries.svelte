@@ -7,6 +7,8 @@
     values,
     delMany,
   } from "idb-keyval";
+  import type { EncryptedEntry } from "$lib/types";
+  import { hashData } from "$lib/utils";
   import { pack, unpack } from "msgpackr";
   import { journalling, sync, stage } from "$lib/store";
 
@@ -92,8 +94,7 @@
     if (
       localStorage.getItem("lastSyncTime") === null ||
       localStorage.getItem("fileId") === null ||
-      localStorage.getItem("newArr") === null ||
-      localStorage.getItem("updateArr") === null
+      localStorage.getItem("dataHash") === null
     ) {
       // first checking if existing data is present on drive or not
       try {
@@ -174,11 +175,18 @@
       });
 
       const { fileId, modifiedTime } = await response.json();
+
+      const dataHash = await hashData(pack(data));
+
+      if (dataHash === null) {
+        errMessage = "Err hashing data";
+        state = changeState(state, "errWhileSync");
+        return;
+      }
+
       localStorage.setItem("fileId", fileId);
       localStorage.setItem("lastSyncTime", modifiedTime);
-      localStorage.setItem("newArr", JSON.stringify([]));
-      localStorage.setItem("updateArr", JSON.stringify([]));
-      localStorage.setItem("deleteArr", JSON.stringify([]));
+      localStorage.setItem("dataHash", dataHash);
 
       state = changeState(state, "successSync");
       return;
@@ -191,40 +199,31 @@
   }
 
   async function existingDataSync() {
-    const newArrString = localStorage.getItem("newArr");
-
-    const updateArrString = localStorage.getItem("updateArr");
-
-    const deleteArrString = localStorage.getItem("deleteArr");
-
     const fileId = localStorage.getItem("fileId");
+
+    const dataHash = localStorage.getItem("dataHash");
 
     const lastSyncTime = localStorage.getItem("lastSyncTime");
 
-    if (
-      newArrString === null ||
-      updateArrString === null ||
-      deleteArrString === null ||
-      fileId === null ||
-      lastSyncTime === null
-    ) {
+    if (dataHash === null || fileId === null || lastSyncTime === null) {
       errMessage =
-        "changes or deletes or fileId or modifiedTime data are not present, when app is doing existing data sync";
+        "dataHash or fileId or modifiedTime data are not present, when app is doing existing data sync";
       state = changeState(state, "errWhileSync");
       return;
     }
-    let newArr: string[] = JSON.parse(newArrString);
-    let updateArr: string[] = JSON.parse(updateArrString);
-    let localDeleteArr: string[] = JSON.parse(deleteArrString);
     const unixLastSyncTime = new Date(lastSyncTime).getTime();
 
-    interface RetrieveData {
-      id: string;
-      entry: Uint8Array;
-      lastSyncTime: number;
+    const localData = await values(entriesStore);
+
+    const localHash = await hashData(pack(localData));
+
+    if (localHash === null) {
+      errMessage = "Err hashing data";
+      state = changeState(state, "errWhileSync");
+      return;
     }
 
-    let retrieveData: RetrieveData[] = [];
+    let retrieveData: EncryptedEntry[] = [];
     let fileIsModified: boolean;
     let driveModifiedTime: string = "";
 
@@ -244,7 +243,7 @@
 
       const data = await response.arrayBuffer();
       const deserialisedData: {
-        data: RetrieveData[];
+        data: EncryptedEntry[];
         fileIsModified: boolean;
         modifiedTime: string;
       } = unpack(new Uint8Array(data));
@@ -262,14 +261,13 @@
     // this takes care of syncing with changes of drive
     if (fileIsModified === true) {
       // then updating the local data
-      const allKeys: string[] = await keys(entriesStore);
       let oldKeys: string[] = [];
 
-      for (let id of allKeys) {
-        if (!newArr.includes(id)) {
-          oldKeys.push(id);
+      localData.forEach((data: EncryptedEntry) => {
+        if (data.lastSyncTime !== null) {
+          oldKeys.push(data.id);
         }
-      }
+      });
 
       const driveKeys = retrieveData.map((entry) => {
         return entry.id;
@@ -280,24 +278,24 @@
 
       for (let id of oldKeys) {
         if (!driveKeys.includes(id)) {
-          const updateArrIndex = updateArr.indexOf(id);
-          if (updateArrIndex !== -1) {
-            updateArr.splice(updateArrIndex, 1);
-          }
-
           deleteArr.push(id);
         }
       }
 
+      console.log(
+        deleteArr,
+        "delteArr",
+        oldKeys,
+        "oldKeys",
+        driveKeys,
+        "driveKeys"
+      );
+
       // now adding or updating data from drive data
-      let updates: [string, RetrieveData][] = [];
+      let updates: [string, EncryptedEntry][] = [];
 
       for (let entry of retrieveData) {
         if (entry.lastSyncTime > unixLastSyncTime) {
-          const updateArrIndex = updateArr.indexOf(entry.id);
-          if (updateArrIndex !== -1) {
-            updateArr.splice(updateArrIndex, 1);
-          }
           updates.push([entry.id, entry]);
         }
       }
@@ -318,7 +316,7 @@
       if (deleteArr.length !== 0) {
         // now deleting entries
         try {
-          await delMany(deleteArr);
+          await delMany(deleteArr, entriesStore);
         } catch (err) {
           console.error(err);
           errMessage =
@@ -335,8 +333,16 @@
     // after sync done with drive data
     const timestamp = new Date().getTime();
 
+    const changeTimestamp: string[] = [];
+
+    localData.forEach((data: EncryptedEntry) => {
+      if (data.lastSyncTime === null) {
+        changeTimestamp.push(data.id);
+      }
+    });
+
     await Promise.all(
-      newArr.map((id) => {
+      changeTimestamp.map((id) => {
         return update(
           id,
           (val) => {
@@ -350,28 +356,10 @@
       })
     );
 
-    await Promise.all(
-      updateArr.map((id) => {
-        return update(
-          id,
-          (val) => {
-            return {
-              ...val,
-              lastSyncTime: timestamp,
-            };
-          },
-          entriesStore
-        );
-      })
-    );
+    const finalData = await values(entriesStore);
 
-    if (
-      updateArr.length !== 0 ||
-      newArr.length !== 0 ||
-      localDeleteArr.length !== 0
-    ) {
-      const finalData = await values(entriesStore);
-
+    // thus also accounting of case where a entry is deleted
+    if (localHash !== dataHash) {
       // uploading to drive
       const response = await fetch("/api/updateData", {
         method: "POST",
@@ -381,7 +369,7 @@
           data: finalData,
         }),
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/msgpack",
         },
       });
 
@@ -391,8 +379,13 @@
       localStorage.setItem("lastSyncTime", modifiedTime);
     }
 
-    localStorage.setItem("newArr", JSON.stringify([]));
-    localStorage.setItem("updateArr", JSON.stringify([]));
+    const finalDataHash = await hashData(pack(finalData));
+    if (finalDataHash === null) {
+      errMessage = "Err hashing data";
+      state = changeState(state, "errWhileSync");
+      return;
+    }
+    localStorage.setItem("dataHash", finalDataHash);
 
     if (fileIsModified === true) {
       state = changeState(state, "successSyncWithUpdate");

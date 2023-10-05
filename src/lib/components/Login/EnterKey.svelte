@@ -6,7 +6,8 @@
   import toast, { Toaster } from "svelte-french-toast";
   import { stage, journalling, sync } from "$lib/store";
   import { createStore, values, setMany, clear } from "idb-keyval";
-  import { unpack } from "msgpackr";
+  import { unpack, pack } from "msgpackr";
+  import { hashData } from "$lib/utils";
 
   export let createKey: boolean;
 
@@ -75,7 +76,13 @@
             data = await res.arrayBuffer();
           } catch (err) {
             console.error(err);
-            reject("");
+            reject("Err while retrieving data from drive via fetch");
+          }
+
+          if (data === undefined) {
+            console.error("fetched data is undefined");
+            reject("fetched data is undefined");
+            return;
           }
 
           const deserialisedData: {
@@ -84,12 +91,22 @@
             modifiedTime: string;
           } = unpack(new Uint8Array(data)); // todo - learn how devs do try catch
 
+          const dataHash = await hashData(pack(deserialisedData.data));
+
+          if (dataHash === null) {
+            reject("dataHash is null");
+            return;
+          }
+
+          if (pubKey === null) {
+            reject("pubKey is null");
+            return;
+          }
+
           encryptedEntries = deserialisedData.data;
           localStorage.setItem("lastSyncTime", deserialisedData.modifiedTime);
           localStorage.setItem("fileId", deserialisedData.fileId);
-          localStorage.setItem("newArr", JSON.stringify([]));
-          localStorage.setItem("updateArr", JSON.stringify([]));
-          localStorage.setItem("deleteArr", JSON.stringify([]));
+          localStorage.setItem("dataHash", dataHash);
           localStorage.setItem("pubKey", pubKey);
 
           let idbData: [string, EncryptedEntries][] = deserialisedData.data.map(
@@ -106,7 +123,9 @@
         {
           loading: "Wait retrieving data from your drive",
           success: "Got the data successfully, now decrypting",
-          error: "Err while retrieving data :|, pls contact me",
+          error: (err) => {
+            return err;
+          },
         }
       );
     } else if (state === "localPubKey") {

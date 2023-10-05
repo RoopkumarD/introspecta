@@ -26,38 +26,6 @@
 
     $journalling.updateIndex = -1;
 
-    const updateArr: string | null = localStorage.getItem("updateArr");
-    if (updateArr !== null) {
-      const arr: string[] = JSON.parse(updateArr);
-
-      const index = arr.indexOf($blog.id);
-      if (index !== -1) {
-        arr.splice(index, 1);
-        localStorage.setItem("updateArr", JSON.stringify(arr));
-      }
-    }
-
-    const newArr: string | null = localStorage.getItem("newArr");
-    const deleteArr: string | null = localStorage.getItem("deleteArr");
-    if (newArr !== null) {
-      const arr: string[] = JSON.parse(newArr);
-
-      const index = arr.indexOf($blog.id);
-      if (index !== -1) {
-        arr.splice(index, 1);
-        localStorage.setItem("newArr", JSON.stringify(arr));
-      }
-
-      if (deleteArr !== null) {
-        const delArr: string[] = JSON.parse(deleteArr);
-
-        if (!arr.includes($blog.id)) {
-          delArr.push($blog.id);
-          localStorage.setItem("deleteArr", JSON.stringify(delArr));
-        }
-      }
-    }
-
     // going back to home
     $blog.id = "";
     $blog.title = "";
