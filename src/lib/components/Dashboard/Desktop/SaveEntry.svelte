@@ -104,7 +104,7 @@
   }
 </script>
 
-<button on:click={saveLog} class="btn btn-square btn-success">
+<button on:click={saveLog} class="btn btn-sm btn-success group">
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -122,4 +122,5 @@
       points="7 3 7 8 15 8"
     /></svg
   >
+  <span class="hidden group-hover:block">Save Entry</span>
 </button>

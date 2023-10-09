@@ -4,10 +4,17 @@
   import Input from "./Input.svelte";
   import { wrap } from "comlink";
   import toast, { Toaster } from "svelte-french-toast";
-  import { stage, journalling, sync } from "$lib/store";
+  import { stage, journalling } from "$lib/store";
   import { createStore, values, setMany, clear } from "idb-keyval";
-  import { unpack, pack } from "msgpackr";
+  import { pack } from "msgpackr";
   import { hashData } from "$lib/utils";
+  import {
+    SCOPES,
+    CLIENT_ID,
+    downloadPubKeyFile,
+    downloadFile,
+    getModifiedTime,
+  } from "$lib/googleDrive";
 
   export let createKey: boolean;
 
@@ -63,35 +70,22 @@
     if (state === "remotePubKey") {
       await toast.promise(
         new Promise(async (resolve, reject) => {
-          let data;
+          let data = await downloadFile(dataFileId);
 
-          try {
-            const res = await fetch("api/loginRetrieveData", {
-              method: "POST",
-              body: JSON.stringify({
-                accessToken: $sync.accessToken,
-                parentFolderId: parentFolderId,
-              }),
-            });
-            data = await res.arrayBuffer();
-          } catch (err) {
-            console.error(err);
-            reject("Err while retrieving data from drive via fetch");
-          }
-
-          if (data === undefined) {
-            console.error("fetched data is undefined");
-            reject("fetched data is undefined");
+          if (data === "errDownloadData") {
+            reject("Err when downloading data from drive");
+            return;
+          } else if (data === "errWhileUnpackingBuffer") {
+            reject("Err when deserialising the data retrieved from drive");
+            return;
+          } else if (data === "notAuthorized") {
+            errMessage =
+              "Please login so that drive allows me to add data to their storage";
+            modalState = changeModalState(state, "errWhileSync");
             return;
           }
 
-          const deserialisedData: {
-            data: EncryptedEntries[];
-            fileId: string;
-            modifiedTime: string;
-          } = unpack(new Uint8Array(data)); // todo - learn how devs do try catch
-
-          const dataHash = await hashData(pack(deserialisedData.data));
+          const dataHash = await hashData(pack(data));
 
           if (dataHash === null) {
             reject("dataHash is null");
@@ -103,17 +97,31 @@
             return;
           }
 
-          encryptedEntries = deserialisedData.data;
-          localStorage.setItem("lastSyncTime", deserialisedData.modifiedTime);
-          localStorage.setItem("fileId", deserialisedData.fileId);
+          encryptedEntries = data;
+
+          const modifiedTime = await getModifiedTime(dataFileId);
+
+          if (modifiedTime === "err") {
+            reject("Err while retrieving modifiedTime of data");
+            return;
+          } else if (
+            modifiedTime === "errResultFieldMissing" ||
+            modifiedTime === undefined
+          ) {
+            reject(
+              "Internal error -> result field missing in modifiedTime response"
+            );
+            return;
+          }
+
+          localStorage.setItem("lastSyncTime", modifiedTime);
+          localStorage.setItem("fileId", dataFileId);
           localStorage.setItem("dataHash", dataHash);
           localStorage.setItem("pubKey", pubKey);
 
-          let idbData: [string, EncryptedEntries][] = deserialisedData.data.map(
-            (data) => {
-              return [data.id, data];
-            }
-          );
+          let idbData: [string, EncryptedEntries][] = data.map((data) => {
+            return [data.id, data];
+          });
 
           await clear(entriesStore);
           setMany(idbData, entriesStore);
@@ -183,6 +191,7 @@
   const modalStates: ModalStates = {
     getAccessToken: {
       gotAccessToken: "retrievingPubKey",
+      errWhileAccessingToken: "errShow",
     },
     retrievingPubKey: {
       gotPubKey: "chooseAnotherAccount",
@@ -195,7 +204,7 @@
   };
 
   let errMessage = ""; // need to learn how in fsm, i can show this side effect
-  let parentFolderId = "";
+  let dataFileId = "";
 
   type ModalState =
     | "getAccessToken"
@@ -211,16 +220,17 @@
 
   async function getAccessToken() {
     let clientInit = window.google.accounts.oauth2.initTokenClient({
-      client_id:
-        "957316931-j7al5upb33rnqvmb5sapvp7771h4h9bo.apps.googleusercontent.com",
-      scope: "https://www.googleapis.com/auth/drive.file",
-      callback: (res: {
-        access_token: string;
-        expires_in: number;
-        scope: string;
-        token_type: string;
-      }) => {
-        $sync.accessToken = res.access_token;
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: (res) => {
+        if (res.error) {
+          errMessage = "Err while authorizing, to get access token";
+          console.error(res.error);
+          modalState = changeModalState(modalState, "errWhileAccessingToken");
+          return;
+        }
+
+        // $sync.accessToken = res.access_token;
         modalState = changeModalState(modalState, "gotAccessToken");
         retrievePubKey();
       },
@@ -230,39 +240,32 @@
   }
 
   async function retrievePubKey() {
-    try {
-      const response = await fetch("/api/retrievePubkey", {
-        method: "POST",
-        body: JSON.stringify({ accessToken: $sync.accessToken }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    const pubKeyDrive = await downloadPubKeyFile();
 
-      const val = await response.json();
-
-      if (val.foundPubkey === false) {
-        errMessage = "There is no public key in the drive";
-        modalState = changeModalState(modalState, "errRetrieving");
-        return;
-      }
-
-      pubKey = val.pubKey;
-      if (pubKey === null) {
-        errMessage = "retrieve pubkey is null, but it wasn't supposed to";
-        modalState = changeModalState(modalState, "errRetrieving");
-        return;
-      }
-
-      parentFolderId = val.parentFolderId;
-
-      modalState = changeModalState(modalState, "gotPubKey");
-    } catch (err) {
-      console.error(err);
-      errMessage = "Err while retrieving public key from drive";
+    if (pubKeyDrive === null) {
+      errMessage = "pubKey file doesn't exists";
+      modalState = changeModalState(modalState, "errRetrieving");
+      return;
+    } else if (pubKeyDrive === "errListFolder") {
+      errMessage = "Err while finding introspecta folder";
+      modalState = changeModalState(modalState, "errRetrieving");
+      return;
+    } else if (pubKeyDrive === "errListPubKey") {
+      errMessage = "Err while finding pubkey file";
+      modalState = changeModalState(modalState, "errRetrieving");
+      return;
+    } else if (pubKeyDrive === "errDownloadPubkey") {
+      errMessage = "Err while downloading pubkey file";
       modalState = changeModalState(modalState, "errRetrieving");
       return;
     }
+
+    pubKey = pubKeyDrive.pubKey;
+    dataFileId = pubKeyDrive.dataFileId;
+
+    modalState = changeModalState(modalState, "gotPubKey");
+
+    return;
   }
 
   onMount(() => {
@@ -332,6 +335,11 @@
     >
   </div>
 </dialog>
+
+<div class="absolute bottom-10 right-10 font-bold bg-accent p-2 rounded-md">
+  <p class=""><span class="underline">Pro tip: </span> Use tab to</p>
+  <p>switch to next input box</p>
+</div>
 
 <main
   class="font-inter flex flex-col items-center mt-20

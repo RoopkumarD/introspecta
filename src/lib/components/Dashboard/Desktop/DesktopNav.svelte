@@ -51,14 +51,17 @@
     <button
       id="menu"
       on:click={() => (drawerOpen = !drawerOpen)}
-      class="btn btn-ghost btn-square"
+      class="btn btn-ghost btn-square ml-4"
     >
       menu
     </button>
     <p id="date" class="text-xl ml-14 mt-1">
       {new Date().toDateString()}
     </p>
-    <button on:click={() => (syncModalShow = true)} class="btn btn-sm text-xl">
+    <button
+      on:click={() => (syncModalShow = true)}
+      class="btn btn-sm text-xl mr-4"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="24"
@@ -77,19 +80,35 @@
       <span class="lowercase mb-1">sync?</span></button
     >
   {:else}
-    <button on:click={goToHome} class="btn btn-ghost btn-square ml-4"
-      >back</button
-    >
-
     <button
       id="menu"
       on:click={() => (drawerOpen = !drawerOpen)}
-      class="btn btn-square btn-ghost"
+      class="btn btn-square btn-ghost ml-4"
     >
       Menu
     </button>
 
     <div id="operations" class="flex items-center gap-4 mr-4">
+      <button on:click={goToHome} class="btn btn-sm group">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-home"
+          ><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline
+            points="9 22 9 12 15 12 15 22"
+          /></svg
+        >
+
+        <span class="hidden group-hover:block">Back Home</span>
+      </button>
+
       <DeleteEntry />
       <SaveEntry encryptLog={workerApi.encryptLog} />
     </div>

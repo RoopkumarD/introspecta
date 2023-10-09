@@ -28,6 +28,12 @@ devDependencies:
   '@sveltejs/kit':
     specifier: ^1.20.4
     version: 1.25.0(svelte@4.2.1)(vite@4.4.9)
+  '@types/gapi':
+    specifier: ^0.0.45
+    version: 0.0.45
+  '@types/gapi.client.drive-v3':
+    specifier: ^0.0.1
+    version: 0.0.1
   '@types/libsodium-wrappers':
     specifier: ^0.7.11
     version: 0.7.11
@@ -318,6 +324,20 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
+  /@maxim_mazurok/gapi.client.discovery-v1@0.1.20200806:
+    resolution: {integrity: sha512-Wl6UfmZVDdWbY3PUu8E2ULk9RPLjnMqp/iOA4tcK8Ne+U/GmlnWP/e34IaZNGArfl7iXJNOG+/3Rj9L9jQyF9Q==}
+    dependencies:
+      '@types/gapi.client': 1.0.6
+      '@types/gapi.client.discovery-v1': 0.0.1
+    dev: true
+
+  /@maxim_mazurok/gapi.client.drive-v3@0.0.20230928:
+    resolution: {integrity: sha512-DdujctUWWKcTY5EmiSVhV282XbYMNfkuw5XvyU9YV1eQoG6U2Pwf450ni5F3dehCn/SJRYdts5WxO92iv6ATsQ==}
+    dependencies:
+      '@types/gapi.client': 1.0.6
+      '@types/gapi.client.discovery-v1': 0.0.1
+    dev: true
+
   /@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.2:
     resolution: {integrity: sha512-9bfjwDxIDWmmOKusUcqdS4Rw+SETlp9Dy39Xui9BEGEk19dDwH0jhipwFzEff/pFg95NKymc6TOTbRKcWeRqyQ==}
     cpu: [arm64]
@@ -470,6 +490,26 @@ packages:
 
   /@types/estree@1.0.1:
     resolution: {integrity: sha512-LG4opVs2ANWZ1TJoKc937iMmNstM/d0ae1vNbnBvBhqCSezgVUOzcLCqbI5elV8Vy6WKwKjaqR+zO9VKirBBCA==}
+    dev: true
+
+  /@types/gapi.client.discovery-v1@0.0.1:
+    resolution: {integrity: sha512-xHW6FW+ERNxqFYNhC6yo1yZjBMmigqQIkX11VY8S6NFteZAX8eWpzvSrmmwFEUm4OOLTJhz8dxEyUAs4ltIMnw==}
+    dependencies:
+      '@maxim_mazurok/gapi.client.discovery-v1': 0.1.20200806
+    dev: true
+
+  /@types/gapi.client.drive-v3@0.0.1:
+    resolution: {integrity: sha512-tIvUpcfeTZI5yRYWAPo/kx6w8kAfW8HeOAJPmXlhVpSBUO8R4hUVZiZhuc6PxNtQkI6LKXeyOuJv70Nd3Nb/8g==}
+    dependencies:
+      '@maxim_mazurok/gapi.client.drive-v3': 0.0.20230928
+    dev: true
+
+  /@types/gapi.client@1.0.6:
+    resolution: {integrity: sha512-BmPAMVqeYFj6yGef2CFmSDlpDnaXYxc7JIpseYclB+khI9DqyYP84+mxu5jCA/qjNituKAXHjgbvDssGJv1IsQ==}
+    dev: true
+
+  /@types/gapi@0.0.45:
+    resolution: {integrity: sha512-xc8X9FrdZcWoOd4tMhLenYbnmaxCgy2FBt+SOI7xv9Efy/7Jk2V9gBZiufFBLIfDUUvpWY7DN3x4lrdL1I9y0Q==}
     dev: true
 
   /@types/libsodium-wrappers@0.7.11:

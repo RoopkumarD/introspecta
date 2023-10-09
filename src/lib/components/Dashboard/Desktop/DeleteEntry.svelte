@@ -6,6 +6,7 @@
   const entriesStore = createStore("introspecta", "entries");
 
   async function deleteLog() {
+    console.log($journalling.updateIndex);
     if ($journalling.updateIndex === -1) {
       // going back to home
       $blog.id = "";
@@ -13,6 +14,7 @@
       $blog.content = "";
 
       $blog.writeBlog = false;
+      return;
     }
 
     try {
@@ -35,7 +37,7 @@
   }
 </script>
 
-<button on:click={deleteLog} class="btn btn-square btn-warning">
+<button on:click={deleteLog} class="btn btn-sm btn-warning group">
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -56,4 +58,6 @@
       y2="17"
     /></svg
   >
+
+  <span class="hidden group-hover:block">Delete Entry</span>
 </button>

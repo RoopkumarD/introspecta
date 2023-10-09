@@ -7,10 +7,21 @@
     values,
     delMany,
   } from "idb-keyval";
-  import type { EncryptedEntry } from "$lib/types";
+  import type { EncryptedEntries } from "$lib/types";
   import { hashData } from "$lib/utils";
-  import { pack, unpack } from "msgpackr";
-  import { journalling, sync, stage } from "$lib/store";
+  import { pack } from "msgpackr";
+  import { journalling, stage } from "$lib/store";
+  import {
+    getFolderId,
+    revokeAccessToken,
+    deleteIntrospectaFolder,
+    createIntrospectaFolder,
+    uploadDataToDrive,
+    uploadPubkeyToDrive,
+    getModifiedTime,
+    downloadFile,
+    updateDataOfDrive,
+  } from "$lib/googleDrive";
 
   export let syncModalShow: boolean;
 
@@ -23,6 +34,7 @@
   const states: States = {
     login: {
       gotAccessToken: "syncPrompt",
+      err: "errShow",
     },
     syncPrompt: {
       clickedSync: "syncing",
@@ -71,13 +83,15 @@
       client_id:
         "957316931-j7al5upb33rnqvmb5sapvp7771h4h9bo.apps.googleusercontent.com",
       scope: "https://www.googleapis.com/auth/drive.file",
-      callback: (res: {
-        access_token: string;
-        expires_in: number;
-        scope: string;
-        token_type: string;
-      }) => {
-        $sync.accessToken = res.access_token;
+      callback: (res) => {
+        if (res.error) {
+          errMessage = "Err while authorizing, to get access token";
+          console.error(res.error);
+          state = changeState(state, "err");
+          return;
+        }
+
+        // $sync.accessToken = res.access_token;
 
         state = changeState(state, "gotAccessToken");
       },
@@ -97,27 +111,18 @@
       localStorage.getItem("dataHash") === null
     ) {
       // first checking if existing data is present on drive or not
-      try {
-        const response = await fetch("/api/existingData", {
-          method: "POST",
-          body: JSON.stringify({ accessToken: $sync.accessToken }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+      const folderId = await getFolderId();
 
-        const { dataExists, folderId } = await response.json();
-        if (dataExists === true) {
-          folderIdVal = folderId;
-          state = changeState(state, "previousExisitingData");
-          return;
-        } else if (dataExists === false) {
-          folderIdVal = "";
-          newUpload(false);
-        }
-      } catch (err) {
-        errMessage = "Err while checking if there is any previous data or not";
+      if (folderId === null) {
+        folderIdVal = "";
+        newUpload(false);
+      } else if (folderId === "errListFolder") {
+        errMessage = "Err while trying to list folder present in drive";
         state = changeState(state, "errWhileSync");
+        return;
+      } else {
+        folderIdVal = folderId;
+        state = changeState(state, "previousExisitingData");
         return;
       }
     } else {
@@ -157,45 +162,73 @@
 
     const data = await values(entriesStore);
 
-    const encodedVersion = pack({
-      data: data,
-      accessToken: $sync.accessToken,
-      pubKey: $journalling.pubKey,
-      dataExists: dataExists,
-      folderId: folderIdVal,
-    });
+    if (dataExists === true) {
+      // delete the folder with it's content
+      const result = await deleteIntrospectaFolder(folderIdVal);
 
-    try {
-      const response = await fetch("/api/uploadData", {
-        method: "POST",
-        body: encodedVersion,
-        headers: {
-          "Content-Type": "application/msgpack",
-        },
-      });
-
-      const { fileId, modifiedTime } = await response.json();
-
-      const dataHash = await hashData(pack(data));
-
-      if (dataHash === null) {
-        errMessage = "Err hashing data";
+      if (result === "err") {
+        errMessage = "Err when trying to delete the introspecta folder";
         state = changeState(state, "errWhileSync");
         return;
       }
+    }
 
-      localStorage.setItem("fileId", fileId);
-      localStorage.setItem("lastSyncTime", modifiedTime);
-      localStorage.setItem("dataHash", dataHash);
+    const newFolderId = await createIntrospectaFolder();
 
-      state = changeState(state, "successSync");
+    if (newFolderId === "errFolderCreate") {
+      errMessage = "Wasn't able to create introspecta folder";
+      state = changeState(state, "errWhileSync");
       return;
-    } catch (err) {
-      console.error(err);
-      errMessage = "Err while checking if there is any previous data or not";
+    } else if (newFolderId === "errNoIdResult") {
+      errMessage = "Couldn't get folder id, internal problem";
       state = changeState(state, "errWhileSync");
       return;
     }
+
+    const uploadDataResult = await uploadDataToDrive(newFolderId, data);
+
+    if (uploadDataResult === "notAuthorized") {
+      errMessage =
+        "Please login so that drive allows me to add data to their storage";
+      state = changeState(state, "errWhileSync");
+      return;
+    } else if (uploadDataResult === "errUpload") {
+      errMessage = "Couldn't upload the data, internal problem";
+      state = changeState(state, "errWhileSync");
+      return;
+    }
+
+    const uploadPubkeyResult = await uploadPubkeyToDrive(
+      newFolderId,
+      $journalling.pubKey,
+      uploadDataResult.id
+    );
+
+    if (uploadPubkeyResult === "notAuthorized") {
+      errMessage =
+        "Please login so that drive allows me to add data to their storage";
+      state = changeState(state, "errWhileSync");
+      return;
+    } else if (uploadPubkeyResult === "errUpload") {
+      errMessage = "Couldn't upload the data, internal problem";
+      state = changeState(state, "errWhileSync");
+      return;
+    }
+
+    const dataHash = await hashData(pack(data));
+
+    if (dataHash === null) {
+      errMessage = "Err hashing data";
+      state = changeState(state, "errWhileSync");
+      return;
+    }
+
+    localStorage.setItem("fileId", uploadDataResult.id);
+    localStorage.setItem("lastSyncTime", uploadDataResult.modifiedTime);
+    localStorage.setItem("dataHash", dataHash);
+
+    state = changeState(state, "successSync");
+    return;
   }
 
   async function existingDataSync() {
@@ -223,47 +256,49 @@
       return;
     }
 
-    let retrieveData: EncryptedEntry[] = [];
-    let fileIsModified: boolean;
-    let driveModifiedTime: string = "";
+    let fileIsModified: boolean = false;
 
     // first checking if there are updates or not
-    try {
-      const response = await fetch("/api/retrieveData", {
-        method: "POST",
-        body: JSON.stringify({
-          accessToken: $sync.accessToken,
-          fileId: fileId,
-          lastSyncTime: lastSyncTime,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    const driveModifiedTime = await getModifiedTime(fileId);
 
-      const data = await response.arrayBuffer();
-      const deserialisedData: {
-        data: EncryptedEntry[];
-        fileIsModified: boolean;
-        modifiedTime: string;
-      } = unpack(new Uint8Array(data));
-
-      retrieveData = deserialisedData.data;
-      fileIsModified = deserialisedData.fileIsModified;
-      driveModifiedTime = deserialisedData.modifiedTime;
-    } catch (err) {
-      console.error(err);
-      errMessage = "Err while trying to retrieve data for existing data sync";
+    if (driveModifiedTime === "err") {
+      errMessage = "Got err while trying to retrieve modified Time of data";
+      state = changeState(state, "errWhileSync");
+      return;
+    } else if (driveModifiedTime === "errResultFieldMissing") {
+      errMessage = "modifiedTime field in result is missing, internal problem";
       state = changeState(state, "errWhileSync");
       return;
     }
 
+    if (new Date(driveModifiedTime).getTime() > unixLastSyncTime) {
+      fileIsModified = true;
+    }
+
     // this takes care of syncing with changes of drive
     if (fileIsModified === true) {
+      let retrieveData = await downloadFile(fileId);
+
+      if (retrieveData === "errDownloadData") {
+        errMessage = "Got err while trying to retrieve data";
+        state = changeState(state, "errWhileSync");
+        return;
+      } else if (retrieveData === "errWhileUnpackingBuffer") {
+        errMessage =
+          "Wasn't able to deserialise the data got from drive, internal problem";
+        state = changeState(state, "errWhileSync");
+        return;
+      } else if (retrieveData === "notAuthorized") {
+        errMessage =
+          "Please login so that drive allows me to add data to their storage";
+        state = changeState(state, "errWhileSync");
+        return;
+      }
+
       // then updating the local data
       let oldKeys: string[] = [];
 
-      localData.forEach((data: EncryptedEntry) => {
+      localData.forEach((data: EncryptedEntries) => {
         if (data.lastSyncTime !== null) {
           oldKeys.push(data.id);
         }
@@ -282,17 +317,8 @@
         }
       }
 
-      console.log(
-        deleteArr,
-        "delteArr",
-        oldKeys,
-        "oldKeys",
-        driveKeys,
-        "driveKeys"
-      );
-
       // now adding or updating data from drive data
-      let updates: [string, EncryptedEntry][] = [];
+      let updates: [string, EncryptedEntries][] = [];
 
       for (let entry of retrieveData) {
         if (entry.lastSyncTime > unixLastSyncTime) {
@@ -335,7 +361,7 @@
 
     const changeTimestamp: string[] = [];
 
-    localData.forEach((data: EncryptedEntry) => {
+    localData.forEach((data: EncryptedEntries) => {
       if (data.lastSyncTime === null) {
         changeTimestamp.push(data.id);
       }
@@ -361,22 +387,21 @@
     // thus also accounting of case where a entry is deleted
     if (localHash !== dataHash) {
       // uploading to drive
-      const response = await fetch("/api/updateData", {
-        method: "POST",
-        body: pack({
-          accessToken: $sync.accessToken,
-          fileId: fileId,
-          data: finalData,
-        }),
-        headers: {
-          "Content-Type": "application/msgpack",
-        },
-      });
+      const updateDataResult = await updateDataOfDrive(fileId, finalData);
 
-      const { modifiedTime } = await response.json();
+      if (updateDataResult === "notAuthorized") {
+        errMessage =
+          "Please login so that drive allows me to add data to their storage";
+        state = changeState(state, "errWhileSync");
+        return;
+      } else if (updateDataResult === "errUpload") {
+        errMessage = "Couldn't upload the data, internal problem";
+        state = changeState(state, "errWhileSync");
+        return;
+      }
 
       // setting back stuff
-      localStorage.setItem("lastSyncTime", modifiedTime);
+      localStorage.setItem("lastSyncTime", updateDataResult.modifiedTime);
     }
 
     const finalDataHash = await hashData(pack(finalData));
@@ -399,7 +424,8 @@
   let syncModal: HTMLDialogElement;
 
   $: if (syncModal && syncModalShow) {
-    if ($sync.accessToken === "") {
+    let accessTokenObj = gapi.auth.getToken();
+    if (accessTokenObj === null) {
       state = "login";
     } else {
       state = "syncPrompt";
@@ -448,7 +474,7 @@
       <div class="flex justify-evenly w-full">
         <button
           on:click={() => {
-            $sync.accessToken = "";
+            revokeAccessToken();
             state = changeState(state, "changeAccount");
             return;
           }}
@@ -526,7 +552,7 @@
       <div class="flex justify-evenly w-full">
         <button
           on:click={() => {
-            $sync.accessToken = "";
+            revokeAccessToken();
             state = changeState(state, "changeAccount");
             return;
           }}

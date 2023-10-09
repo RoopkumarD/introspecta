@@ -40,7 +40,9 @@
 </script>
 
 <nav class="flex justify-between items-center px-4 pt-4 xl:px-8">
-  <h1 class="font-abrilFatFace text-xl">introspecta</h1>
+  <h1 class="font-abrilFatFace text-xl">
+    introspecta<span class="bg-primary ml-2 p-1 rounded-md text-sm">beta</span>
+  </h1>
   <label class="swap swap-rotate">
     <!-- this hidden checkbox controls the state -->
     <input

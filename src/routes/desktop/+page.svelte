@@ -2,10 +2,31 @@
   import DesktopHome from "$lib/components/Dashboard/Desktop/DesktopHome.svelte";
   import Login from "$lib/components/Login/Login.svelte";
   import { stage } from "$lib/store";
+  import { API_KEY, DISCOVERY_DOC, revokeAccessToken } from "$lib/googleDrive";
+  import { beforeNavigate } from "$app/navigation";
+
+  function gapiLoaded() {
+    window.gapi.load("client", initializeGapiClient);
+  }
+
+  async function initializeGapiClient() {
+    await window.gapi.client.init({
+      apiKey: API_KEY,
+      discoveryDocs: [DISCOVERY_DOC],
+    });
+  }
+
+  beforeNavigate(({ type }) => {
+    if (type === "leave") {
+      revokeAccessToken();
+    }
+  });
 </script>
 
 <svelte:head>
   <title>Introspecta</title>
+
+  <script src="https://apis.google.com/js/api.js" on:load={gapiLoaded}></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
 </svelte:head>
 

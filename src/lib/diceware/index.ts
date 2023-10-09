@@ -19,10 +19,14 @@ function secureRandom(count: number) {
   return result % count;
 }
 
+interface eff {
+  [key: number]: string;
+}
+
 export function getWords(
   numWords: number,
   numRollsPerWord: number,
-  eff,
+  eff: eff,
 ): string[] {
   "use strict";
 
