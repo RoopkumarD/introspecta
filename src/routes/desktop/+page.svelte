@@ -2,8 +2,7 @@
   import DesktopHome from "$lib/components/Dashboard/Desktop/DesktopHome.svelte";
   import Login from "$lib/components/Login/Login.svelte";
   import { stage } from "$lib/store";
-  import { API_KEY, DISCOVERY_DOC, revokeAccessToken } from "$lib/googleDrive";
-  import { beforeNavigate } from "$app/navigation";
+  import { API_KEY, DISCOVERY_DOC } from "$lib/googleDrive";
 
   function gapiLoaded() {
     window.gapi.load("client", initializeGapiClient);
@@ -15,12 +14,6 @@
       discoveryDocs: [DISCOVERY_DOC],
     });
   }
-
-  beforeNavigate(({ type }) => {
-    if (type === "leave") {
-      revokeAccessToken();
-    }
-  });
 </script>
 
 <svelte:head>

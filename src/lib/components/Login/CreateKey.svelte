@@ -110,7 +110,7 @@
     class="text-error text-center w-3/4 lg:w-1/2 mb-12 text-sm
     lg:text-lg"
   >
-    *Important: please write this password down somewhere. Since i am not saving
-    this anywhere, thus i won't be able to recover it if you lose it
+    *Important: please write this 5 words password down somewhere. Since i am
+    not saving this anywhere, thus i won't be able to recover it if you lose it
   </p>
 </main>

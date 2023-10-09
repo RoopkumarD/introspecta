@@ -22,6 +22,7 @@
     downloadFile,
     updateDataOfDrive,
   } from "$lib/googleDrive";
+  import { PUBLIC_CLIENT_ID_DEV } from "$env/static/public";
 
   export let syncModalShow: boolean;
 
@@ -80,8 +81,7 @@
 
   async function getAccessToken() {
     clientInit = window.google.accounts.oauth2.initTokenClient({
-      client_id:
-        "957316931-j7al5upb33rnqvmb5sapvp7771h4h9bo.apps.googleusercontent.com",
+      client_id: PUBLIC_CLIENT_ID_DEV,
       scope: "https://www.googleapis.com/auth/drive.file",
       callback: (res) => {
         if (res.error) {
@@ -188,11 +188,15 @@
     const uploadDataResult = await uploadDataToDrive(newFolderId, data);
 
     if (uploadDataResult === "notAuthorized") {
+      await deleteIntrospectaFolder(newFolderId);
+
       errMessage =
         "Please login so that drive allows me to add data to their storage";
       state = changeState(state, "errWhileSync");
       return;
     } else if (uploadDataResult === "errUpload") {
+      await deleteIntrospectaFolder(newFolderId);
+
       errMessage = "Couldn't upload the data, internal problem";
       state = changeState(state, "errWhileSync");
       return;
@@ -205,11 +209,15 @@
     );
 
     if (uploadPubkeyResult === "notAuthorized") {
+      await deleteIntrospectaFolder(newFolderId);
+
       errMessage =
         "Please login so that drive allows me to add data to their storage";
       state = changeState(state, "errWhileSync");
       return;
     } else if (uploadPubkeyResult === "errUpload") {
+      await deleteIntrospectaFolder(newFolderId);
+
       errMessage = "Couldn't upload the data, internal problem";
       state = changeState(state, "errWhileSync");
       return;
@@ -218,6 +226,8 @@
     const dataHash = await hashData(pack(data));
 
     if (dataHash === null) {
+      await deleteIntrospectaFolder(newFolderId);
+
       errMessage = "Err hashing data";
       state = changeState(state, "errWhileSync");
       return;
@@ -390,11 +400,41 @@
       const updateDataResult = await updateDataOfDrive(fileId, finalData);
 
       if (updateDataResult === "notAuthorized") {
+        await Promise.all(
+          changeTimestamp.map((id) => {
+            return update(
+              id,
+              (val) => {
+                return {
+                  ...val,
+                  lastSyncTime: null,
+                };
+              },
+              entriesStore
+            );
+          })
+        );
+
         errMessage =
           "Please login so that drive allows me to add data to their storage";
         state = changeState(state, "errWhileSync");
         return;
       } else if (updateDataResult === "errUpload") {
+        await Promise.all(
+          changeTimestamp.map((id) => {
+            return update(
+              id,
+              (val) => {
+                return {
+                  ...val,
+                  lastSyncTime: null,
+                };
+              },
+              entriesStore
+            );
+          })
+        );
+
         errMessage = "Couldn't upload the data, internal problem";
         state = changeState(state, "errWhileSync");
         return;
@@ -405,6 +445,12 @@
     }
 
     const finalDataHash = await hashData(pack(finalData));
+
+    // I don't have to make this atomic, as if this fails it doesn't matter
+    // because if user again sync's, it will not do above stuff and do this instead
+    // thus again can do finalDataHash
+    // But yeah, user won't be shown reload button and that can be a problem if user
+    // continues to use app after sync
     if (finalDataHash === null) {
       errMessage = "Err hashing data";
       state = changeState(state, "errWhileSync");

@@ -1,9 +1,9 @@
 import type { EncryptedEntries } from "$lib/types";
-import { PUBLIC_API_KEY, PUBLIC_CLIENT_ID } from "$env/static/public";
+import { PUBLIC_API_KEY_DEV, PUBLIC_CLIENT_ID_DEV } from "$env/static/public";
 import { pack, unpack } from "msgpackr";
 
-export const CLIENT_ID = PUBLIC_CLIENT_ID;
-export const API_KEY = PUBLIC_API_KEY;
+export const CLIENT_ID = PUBLIC_CLIENT_ID_DEV;
+export const API_KEY = PUBLIC_API_KEY_DEV;
 export const DISCOVERY_DOC =
   "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
 export const SCOPES = "https://www.googleapis.com/auth/drive.file";
@@ -145,6 +145,8 @@ export async function getModifiedTime(
   return response.result.modifiedTime;
 }
 
+// sends a xhr request to revoke the access token
+// Thus would need time to execute this
 export function revokeAccessToken() {
   const token = gapi.client.getToken();
   if (token !== null) {
