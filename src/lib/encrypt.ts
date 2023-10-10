@@ -11,7 +11,7 @@ const workerApi = {
   expose(workerApi);
 })();
 
-async function encryptLog(entry: Buffer, pubKey: string) {
+async function encryptLog(entry: Uint8Array, pubKey: string) {
   const encrypted = sodium.crypto_box_seal(entry, sodium.from_hex(pubKey));
   return { encrypted: encrypted };
 }

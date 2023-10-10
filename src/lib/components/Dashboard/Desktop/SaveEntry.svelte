@@ -5,7 +5,7 @@
   import toast from "svelte-french-toast";
 
   export let encryptLog: (
-    entry: Buffer,
+    entry: Uint8Array,
     pubKey: string
   ) => Promise<{ encrypted: string }>;
 
