@@ -11,9 +11,9 @@
   import {
     SCOPES,
     CLIENT_ID,
-    downloadPubKeyFile,
     downloadFile,
-    getModifiedTime,
+    getFileMetadata,
+    revokeAccessToken,
   } from "$lib/googleDrive";
 
   export let createKey: boolean;
@@ -98,21 +98,6 @@
           }
 
           encryptedEntries = data;
-
-          const modifiedTime = await getModifiedTime(dataFileId);
-
-          if (modifiedTime === "err") {
-            reject("Err while retrieving modifiedTime of data");
-            return;
-          } else if (
-            modifiedTime === "errResultFieldMissing" ||
-            modifiedTime === undefined
-          ) {
-            reject(
-              "Internal error -> result field missing in modifiedTime response"
-            );
-            return;
-          }
 
           localStorage.setItem("lastSyncTime", modifiedTime);
           localStorage.setItem("fileId", dataFileId);
@@ -205,6 +190,7 @@
 
   let errMessage = ""; // need to learn how in fsm, i can show this side effect
   let dataFileId = "";
+  let modifiedTime = "";
 
   type ModalState =
     | "getAccessToken"
@@ -240,28 +226,34 @@
   }
 
   async function retrievePubKey() {
-    const pubKeyDrive = await downloadPubKeyFile();
+    const metaDatas = await getFileMetadata();
 
-    if (pubKeyDrive === null) {
-      errMessage = "pubKey file doesn't exists";
+    if (metaDatas === null) {
+      errMessage = "introspecta file doesn't exists";
       modalState = changeModalState(modalState, "errRetrieving");
       return;
-    } else if (pubKeyDrive === "errListFolder") {
-      errMessage = "Err while finding introspecta folder";
+    } else if (metaDatas === "errListFile") {
+      errMessage = "Err while finding introspecta file";
       modalState = changeModalState(modalState, "errRetrieving");
       return;
-    } else if (pubKeyDrive === "errListPubKey") {
-      errMessage = "Err while finding pubkey file";
+    } else if (metaDatas === "responseFieldsUndefined") {
+      errMessage =
+        "Response from google drive didn't include important data, internal problem";
       modalState = changeModalState(modalState, "errRetrieving");
       return;
-    } else if (pubKeyDrive === "errDownloadPubkey") {
-      errMessage = "Err while downloading pubkey file";
+    } else if (metaDatas === "entriesNotStored") {
+      errMessage = "File data is modified by someone, please reach out to me";
+      modalState = changeModalState(modalState, "errRetrieving");
+      return;
+    } else if (metaDatas === "pubKeyNotStored") {
+      errMessage = "File data doesn't contain pubKey, please reach out to me";
       modalState = changeModalState(modalState, "errRetrieving");
       return;
     }
 
-    pubKey = pubKeyDrive.pubKey;
-    dataFileId = pubKeyDrive.dataFileId;
+    pubKey = metaDatas.pubKey;
+    dataFileId = metaDatas.id;
+    modifiedTime = metaDatas.modifiedTime;
 
     modalState = changeModalState(modalState, "gotPubKey");
 
@@ -306,6 +298,7 @@
     {#if modalState === "chooseAnotherAccount"}
       <button
         on:click={() => {
+          revokeAccessToken();
           pubKey = null;
           modalState = changeModalState(modalState, "yesChooseAnother");
         }}

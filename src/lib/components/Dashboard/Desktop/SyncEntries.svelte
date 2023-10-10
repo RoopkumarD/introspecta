@@ -12,15 +12,13 @@
   import { pack } from "msgpackr";
   import { journalling, stage } from "$lib/store";
   import {
-    getFolderId,
     revokeAccessToken,
-    deleteIntrospectaFolder,
-    createIntrospectaFolder,
-    uploadDataToDrive,
-    uploadPubkeyToDrive,
     getModifiedTime,
     downloadFile,
+    uploadDataToDrive,
     updateDataOfDrive,
+    getFileMetadata,
+    deleteIntrospectaFile,
   } from "$lib/googleDrive";
   import { PUBLIC_CLIENT_ID_DEV } from "$env/static/public";
 
@@ -70,8 +68,9 @@
   // to show err message in errShow state
   let errMessage = "";
 
-  // folderId for new upload if existing data is there
-  let folderIdVal = "";
+  // number of entries to show to user and fileId if user wants to delete
+  let entries = "";
+  let existingFileId = "";
 
   function changeState(currentState: string, action: string) {
     return states[currentState][action];
@@ -91,8 +90,6 @@
           return;
         }
 
-        // $sync.accessToken = res.access_token;
-
         state = changeState(state, "gotAccessToken");
       },
     });
@@ -111,17 +108,31 @@
       localStorage.getItem("dataHash") === null
     ) {
       // first checking if existing data is present on drive or not
-      const folderId = await getFolderId();
+      const metaDatas = await getFileMetadata();
 
-      if (folderId === null) {
-        folderIdVal = "";
+      if (metaDatas === null) {
         newUpload(false);
-      } else if (folderId === "errListFolder") {
-        errMessage = "Err while trying to list folder present in drive";
+        return;
+      } else if (metaDatas === "errListFile") {
+        errMessage = "Err while finding introspecta file";
+        state = changeState(state, "errWhileSync");
+        return;
+      } else if (metaDatas === "responseFieldsUndefined") {
+        errMessage =
+          "Response from google drive didn't include important data, internal problem";
+        state = changeState(state, "errWhileSync");
+        return;
+      } else if (metaDatas === "entriesNotStored") {
+        errMessage = "File data is modified by someone, please reach out to me";
+        state = changeState(state, "errWhileSync");
+        return;
+      } else if (metaDatas === "pubKeyNotStored") {
+        errMessage = "File data doesn't contain pubKey, please reach out to me";
         state = changeState(state, "errWhileSync");
         return;
       } else {
-        folderIdVal = folderId;
+        entries = metaDatas.entries;
+        existingFileId = metaDatas.id;
         state = changeState(state, "previousExisitingData");
         return;
       }
@@ -164,7 +175,7 @@
 
     if (dataExists === true) {
       // delete the folder with it's content
-      const result = await deleteIntrospectaFolder(folderIdVal);
+      const result = await deleteIntrospectaFile(existingFileId);
 
       if (result === "err") {
         errMessage = "Err when trying to delete the introspecta folder";
@@ -173,51 +184,14 @@
       }
     }
 
-    const newFolderId = await createIntrospectaFolder();
-
-    if (newFolderId === "errFolderCreate") {
-      errMessage = "Wasn't able to create introspecta folder";
-      state = changeState(state, "errWhileSync");
-      return;
-    } else if (newFolderId === "errNoIdResult") {
-      errMessage = "Couldn't get folder id, internal problem";
-      state = changeState(state, "errWhileSync");
-      return;
-    }
-
-    const uploadDataResult = await uploadDataToDrive(newFolderId, data);
+    const uploadDataResult = await uploadDataToDrive($journalling.pubKey, data);
 
     if (uploadDataResult === "notAuthorized") {
-      await deleteIntrospectaFolder(newFolderId);
-
       errMessage =
         "Please login so that drive allows me to add data to their storage";
       state = changeState(state, "errWhileSync");
       return;
     } else if (uploadDataResult === "errUpload") {
-      await deleteIntrospectaFolder(newFolderId);
-
-      errMessage = "Couldn't upload the data, internal problem";
-      state = changeState(state, "errWhileSync");
-      return;
-    }
-
-    const uploadPubkeyResult = await uploadPubkeyToDrive(
-      newFolderId,
-      $journalling.pubKey,
-      uploadDataResult.id
-    );
-
-    if (uploadPubkeyResult === "notAuthorized") {
-      await deleteIntrospectaFolder(newFolderId);
-
-      errMessage =
-        "Please login so that drive allows me to add data to their storage";
-      state = changeState(state, "errWhileSync");
-      return;
-    } else if (uploadPubkeyResult === "errUpload") {
-      await deleteIntrospectaFolder(newFolderId);
-
       errMessage = "Couldn't upload the data, internal problem";
       state = changeState(state, "errWhileSync");
       return;
@@ -226,7 +200,7 @@
     const dataHash = await hashData(pack(data));
 
     if (dataHash === null) {
-      await deleteIntrospectaFolder(newFolderId);
+      await deleteIntrospectaFile(uploadDataResult.id);
 
       errMessage = "Err hashing data";
       state = changeState(state, "errWhileSync");
@@ -366,6 +340,17 @@
       localStorage.setItem("lastSyncTime", driveModifiedTime);
     }
 
+    /*
+    Err handling and atomicity
+
+    Well since if there is some data in drive, then i don't have to worry about retrieveData again
+    if there is error below because, localModifiedTime is updated. Thus it won't call again
+    And only execute stuff below again
+
+    Just one problem, can't say file is modified to user, maybe i should find if there is 
+    change by looking at individual entries sync time
+    */
+
     // after sync done with drive data
     const timestamp = new Date().getTime();
 
@@ -446,11 +431,6 @@
 
     const finalDataHash = await hashData(pack(finalData));
 
-    // I don't have to make this atomic, as if this fails it doesn't matter
-    // because if user again sync's, it will not do above stuff and do this instead
-    // thus again can do finalDataHash
-    // But yeah, user won't be shown reload button and that can be a problem if user
-    // continues to use app after sync
     if (finalDataHash === null) {
       errMessage = "Err hashing data";
       state = changeState(state, "errWhileSync");

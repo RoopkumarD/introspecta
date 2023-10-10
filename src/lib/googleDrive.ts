@@ -8,77 +8,86 @@ export const DISCOVERY_DOC =
   "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
 export const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
-// string -> fileId, 'err' -> err while getting, null -> no folder/file found
-
-export async function getFolderId(): Promise<string | "errListFolder" | null> {
-  let folderResponse;
-  try {
-    folderResponse = await gapi.client.drive.files.list({
-      q: `name = 'introspecta-app-data' and mimeType = 'application/vnd.google-apps.folder'`,
-      fields: "files(id, name)",
-    });
-  } catch (err) {
-    console.error(err);
-    return "errListFolder";
-  }
-
-  const { files } = JSON.parse(folderResponse.body);
-
-  if (!files || files.length === 0) {
-    return null;
-  } else {
-    return files[0].id;
+// sends a xhr request to revoke the access token
+// Thus would need time to execute this
+export function revokeAccessToken() {
+  const token = gapi.client.getToken();
+  if (token !== null) {
+    window.google?.accounts.oauth2.revoke(token.access_token);
+    gapi.client.setToken(null);
   }
 }
 
-export async function downloadPubKeyFile(): Promise<
-  | { pubKey: string; dataFileId: string }
-  | "errListFolder"
-  | "errListPubKey"
-  | "errDownloadPubkey"
-  | null
-> {
-  const folderId = await getFolderId();
-
-  if (folderId === null) {
-    return null;
-  } else if (folderId === "errListFolder") {
-    return "errListFolder";
-  }
-
-  let fileResponse;
-  try {
-    fileResponse = await gapi.client.drive.files.list({
-      q: `name = 'introspecta-pubKey.json' and '${folderId}' in parents and mimeType = 'application/json'`,
-      fields: "files(id, name)",
-    });
-  } catch (err) {
-    console.error(err);
-    return "errListPubKey";
-  }
-
-  const { files } = JSON.parse(fileResponse.body);
-
-  if (!files || files.length === 0) {
-    return null;
-  }
-
+export async function getModifiedTime(
+  fileId: string,
+): Promise<string | "err" | "errResultFieldMissing"> {
   let response;
   try {
     response = await gapi.client.drive.files.get({
-      fileId: files[0].id,
-      alt: "media",
+      fileId: fileId,
+      fields: "modifiedTime",
     });
   } catch (err) {
     console.error(err);
-    return "errDownloadPubkey";
+    return "err";
   }
 
-  const data: { pubKey: string; dataFileId: string } = JSON.parse(
-    response.body,
-  );
+  if (response.result.modifiedTime === undefined) {
+    return "errResultFieldMissing";
+  }
 
-  return data;
+  return response.result.modifiedTime;
+}
+
+// string -> fileId, 'err' -> err while getting, null -> no folder/file found
+
+export async function getFileMetadata(): Promise<
+  | "errListFile"
+  | null
+  | "responseFieldsUndefined"
+  | "entriesNotStored"
+  | "pubKeyNotStored"
+  | { id: string; modifiedTime: string; pubKey: string; entries: string }
+> {
+  let response;
+  try {
+    response = await window.gapi.client.drive.files.list({
+      q: `name = 'introspecta-app-data.msp' and mimeType = 'application/msgpack' and 'root' in parents and trashed = false`,
+      fields: "files(id, name, modifiedTime, appProperties)",
+    });
+  } catch (err) {
+    console.error(err);
+    return "errListFile";
+  }
+
+  const files = response.result.files;
+  if (!files || files.length == 0) {
+    console.log("Files not found");
+    return null;
+  }
+
+  if (
+    files[0].id === undefined ||
+    files[0].modifiedTime === undefined ||
+    files[0].appProperties === undefined
+  ) {
+    return "responseFieldsUndefined";
+  }
+
+  if (files[0].appProperties.pubKey === undefined) {
+    return "pubKeyNotStored";
+  }
+
+  if (files[0].appProperties.entries === undefined) {
+    return "entriesNotStored";
+  }
+
+  return {
+    id: files[0].id,
+    modifiedTime: files[0].modifiedTime,
+    pubKey: files[0].appProperties.pubKey,
+    entries: files[0].appProperties.entries,
+  };
 }
 
 export async function downloadFile(
@@ -124,43 +133,12 @@ export async function downloadFile(
   return dataArr;
 }
 
-export async function getModifiedTime(
+export async function deleteIntrospectaFile(
   fileId: string,
-): Promise<string | "err" | "errResultFieldMissing"> {
-  let response;
-  try {
-    response = await gapi.client.drive.files.get({
-      fileId: fileId,
-      fields: "modifiedTime",
-    });
-  } catch (err) {
-    console.error(err);
-    return "err";
-  }
-
-  if (response.result.modifiedTime === undefined) {
-    return "errResultFieldMissing";
-  }
-
-  return response.result.modifiedTime;
-}
-
-// sends a xhr request to revoke the access token
-// Thus would need time to execute this
-export function revokeAccessToken() {
-  const token = gapi.client.getToken();
-  if (token !== null) {
-    window.google?.accounts.oauth2.revoke(token.access_token);
-    gapi.client.setToken(null);
-  }
-}
-
-export async function deleteIntrospectaFolder(
-  folderId: string,
 ): Promise<"success" | "err"> {
   try {
     await gapi.client.drive.files.delete({
-      fileId: folderId,
+      fileId: fileId,
     });
 
     return "success";
@@ -170,99 +148,24 @@ export async function deleteIntrospectaFolder(
   }
 }
 
-export async function createIntrospectaFolder(): Promise<
-  "errFolderCreate" | "errNoIdResult" | string
-> {
-  const fileMetaData = {
-    name: "introspecta-app-data",
-    mimeType: "application/vnd.google-apps.folder",
-  };
-
-  let response;
-  try {
-    response = await gapi.client.drive.files.create({
-      resource: fileMetaData,
-      fields: "id",
-    });
-  } catch (err) {
-    console.error(err);
-    return "errFolderCreate";
-  }
-
-  if (response.result.id === undefined) {
-    console.error(
-      "Bro result field of response doesn't have id data of folder",
-    );
-    return "errNoIdResult";
-  }
-
-  return response.result.id;
-}
-
-export async function uploadPubkeyToDrive(
-  folderId: string,
-  pubKey: string,
-  dataFileId: string,
-): Promise<"notAuthorized" | "errUpload" | "success"> {
-  const jsonData: { pubKey: string; dataFileId: string } = {
-    pubKey: pubKey,
-    dataFileId: dataFileId,
-  };
-  const file = new Blob([JSON.stringify(jsonData)], {
-    type: "application/json",
-  });
-  const metadata = {
-    name: "introspecta-pubKey.json",
-    mimeType: "application/json",
-    parents: [folderId],
-  };
-
-  const accessTokenObj = gapi.auth.getToken();
-
-  if (accessTokenObj === null) {
-    console.error("user is not authorized");
-    return "notAuthorized";
-  }
-
-  const form = new FormData();
-  form.append(
-    "metadata",
-    new Blob([JSON.stringify(metadata)], { type: "application/json" }),
-  );
-  form.append("file", file);
-
-  let response;
-  try {
-    response = await fetch(
-      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
-      {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + accessTokenObj.access_token,
-        },
-        body: form,
-      },
-    );
-  } catch (err) {
-    console.error(err);
-    return "errUpload";
-  }
-
-  return "success";
-}
-
 export async function uploadDataToDrive(
-  folderId: string,
+  pubKey: string,
   dataArr: EncryptedEntries[],
 ): Promise<
   "notAuthorized" | "errUpload" | { id: string; modifiedTime: string }
 > {
+  const entries = dataArr.length.toString();
+
   const serialisedData = pack(dataArr);
   const file = new Blob([serialisedData], { type: "application/msgpack" });
   const metadata = {
-    name: "introspecta-data.msp",
+    name: "introspecta-app-data.msp",
     mimeType: "application/msgpack",
-    parents: [folderId],
+    parents: ["root"],
+    appProperties: {
+      pubKey: pubKey,
+      entries: entries,
+    },
   };
 
   const accessTokenObj = gapi.auth.getToken();
@@ -304,7 +207,22 @@ export async function updateDataOfDrive(
   fileId: string,
   dataArr: EncryptedEntries[],
 ): Promise<"notAuthorized" | "errUpload" | { modifiedTime: string }> {
+  const entries = dataArr.length.toString();
+
   const serialisedData = pack(dataArr);
+
+  const file = new Blob([serialisedData], { type: "application/msgpack" });
+  const metadata = {
+    appProperties: {
+      entries: entries,
+    },
+  };
+  const form = new FormData();
+  form.append(
+    "metadata",
+    new Blob([JSON.stringify(metadata)], { type: "application/json" }),
+  );
+  form.append("file", file);
 
   const accessTokenObj = gapi.auth.getToken();
 
@@ -316,13 +234,13 @@ export async function updateDataOfDrive(
   let response;
   try {
     response = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=modifiedTime`,
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&fields=modifiedTime`,
       {
         method: "PATCH",
         headers: {
           Authorization: "Bearer " + accessTokenObj.access_token,
         },
-        body: serialisedData,
+        body: form,
       },
     );
   } catch (err) {
