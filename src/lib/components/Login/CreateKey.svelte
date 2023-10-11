@@ -1,11 +1,9 @@
 <script lang="ts">
   import { getWords } from "$lib/diceware/index";
   import eff from "$lib/diceware/eff";
-  import createAcc from "$lib/createAcc?worker";
-  import { onDestroy, onMount } from "svelte";
-  import { wrap } from "comlink";
   import { journalling, stage } from "$lib/store";
   import { clear, createStore } from "idb-keyval";
+  import { generateKeyPairs } from "$lib/createAcc";
 
   const passphrase = getWords(5, 5, eff);
   let backed = false;
@@ -28,7 +26,7 @@
       await clear(entriesStore);
     }
 
-    const { publicKey } = await workerApi.generateKeyPairs(passphrase.join(""));
+    const { publicKey } = await generateKeyPairs(passphrase.join(""));
     localStorage.setItem("pubKey", publicKey);
     $journalling.pubKey = publicKey;
     $journalling.usedIds = new Set();
@@ -39,20 +37,6 @@
     };
     $stage = "Dashboard";
   }
-
-  interface WorkerApi {
-    generateKeyPairs: (passphrase: string) => Promise<{ publicKey: string }>;
-  }
-  let worker: Worker | undefined;
-  let workerApi: WorkerApi;
-  onMount(() => {
-    worker = new createAcc();
-    workerApi = wrap<WorkerApi>(worker);
-  });
-
-  onDestroy(() => {
-    worker?.terminate();
-  });
 
   let dialog: HTMLDialogElement;
 </script>

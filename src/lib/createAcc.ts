@@ -1,17 +1,6 @@
-import { expose } from "comlink";
-import sodium, { ready as sodiumReady } from "libsodium-wrappers";
+import sodium from "libsodium-wrappers";
 
-const workerApi = {
-  generateKeyPairs: generateKeyPairs,
-};
-
-(async () => {
-  await sodiumReady;
-
-  expose(workerApi);
-})();
-
-async function generateKeyPairs(passphrase: string) {
+export async function generateKeyPairs(passphrase: string) {
   const encoder = new TextEncoder();
   const passBuf = encoder.encode(passphrase);
 

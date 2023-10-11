@@ -3,11 +3,7 @@
   import { pack } from "msgpackr";
   import { update, set, createStore } from "idb-keyval";
   import toast from "svelte-french-toast";
-
-  export let encryptLog: (
-    entry: Uint8Array,
-    pubKey: string
-  ) => Promise<{ encrypted: string }>;
+  import { encryptLog } from "$lib/encrypt";
 
   const entriesStore = createStore("introspecta", "entries");
 

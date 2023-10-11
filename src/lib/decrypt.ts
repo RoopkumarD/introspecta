@@ -1,7 +1,6 @@
-import { expose } from "comlink";
-import sodium, { ready as sodiumReady } from "libsodium-wrappers";
 import { unpack } from "msgpackr";
 import type { EncryptedEntries, entry } from "$lib/types";
+import sodium from "libsodium-wrappers";
 
 interface DecryptedLogs {
   id: string;
@@ -17,18 +16,7 @@ interface SortedJournals {
   [journalName: string]: DecryptedLogs[];
 }
 
-const workerApi = {
-  decrypt: decrypt,
-  generateKeyPairs: generateKeyPairs,
-};
-
-(async () => {
-  await sodiumReady;
-
-  expose(workerApi);
-})();
-
-async function generateKeyPairs(passphrase: string) {
+export async function generateKeyPairs(passphrase: string) {
   const encoder = new TextEncoder();
   const passBuf = encoder.encode(passphrase);
 
@@ -40,7 +28,7 @@ async function generateKeyPairs(passphrase: string) {
   };
 }
 
-async function decrypt(
+export async function decrypt(
   passphrase: string,
   encryptedEntries: EncryptedEntries[],
 ) {

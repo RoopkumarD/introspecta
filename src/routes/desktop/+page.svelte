@@ -3,6 +3,8 @@
   import Login from "$lib/components/Login/Login.svelte";
   import { stage } from "$lib/store";
   import { API_KEY, DISCOVERY_DOC } from "$lib/googleDrive";
+  import { onMount } from "svelte";
+  import sodium from "libsodium-wrappers";
 
   function gapiLoaded() {
     window.gapi.load("client", initializeGapiClient);
@@ -14,6 +16,10 @@
       discoveryDocs: [DISCOVERY_DOC],
     });
   }
+
+  onMount(async () => {
+    await sodium.ready;
+  });
 </script>
 
 <svelte:head>

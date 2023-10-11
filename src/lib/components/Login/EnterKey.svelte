@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
-  import decrypt from "$lib/decrypt?worker";
+  import { onMount } from "svelte";
   import Input from "./Input.svelte";
-  import { wrap } from "comlink";
   import toast, { Toaster } from "svelte-french-toast";
   import { stage, journalling } from "$lib/store";
   import { createStore, values, setMany, clear, keys } from "idb-keyval";
@@ -15,6 +13,7 @@
     getFileMetadata,
     revokeAccessToken,
   } from "$lib/googleDrive";
+  import { generateKeyPairs, decrypt } from "$lib/decrypt";
 
   export let createKey: boolean;
 
@@ -38,18 +37,6 @@
     [journalName: string]: entry[];
   }
 
-  interface WorkerApi {
-    decrypt: (
-      passphrase: string,
-      encryptedEntries: EncryptedEntries[]
-    ) => Promise<{ decryptedEntries: DecryptedEntries }>;
-
-    generateKeyPairs: (passphrase: string) => Promise<{ publicKey: string }>;
-  }
-
-  let worker: Worker | undefined;
-  let workerApi: WorkerApi;
-
   // need to implement fsm for this, as user can just press unlock diary multiple times
   async function unlockDiary() {
     const entriesStore = createStore("introspecta", "entries");
@@ -59,7 +46,7 @@
     }
 
     // checking if passphrase is correct or not
-    const genPubKey = await workerApi.generateKeyPairs(passphrase.join(""));
+    const genPubKey = await generateKeyPairs(passphrase.join(""));
     if (genPubKey.publicKey !== pubKey) {
       toast.error("Password isn't matching with saved one");
       return;
@@ -128,7 +115,7 @@
       encryptedEntries = await values(entriesStore);
     }
 
-    const { decryptedEntries } = await workerApi.decrypt(
+    const { decryptedEntries } = await decrypt(
       passphrase.join(""),
       encryptedEntries
     );
@@ -272,13 +259,6 @@
     if (pubKey === null) {
       state = "remotePubKey";
     }
-
-    worker = new decrypt();
-    workerApi = wrap<WorkerApi>(worker);
-  });
-
-  onDestroy(() => {
-    worker?.terminate();
   });
 </script>
 

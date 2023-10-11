@@ -1,9 +1,6 @@
 <script lang="ts">
   import { blog, journalling } from "$lib/store";
-  import { onMount, onDestroy } from "svelte";
-  import encrypt from "$lib/encrypt?worker";
   import { Toaster } from "svelte-french-toast";
-  import { wrap } from "comlink";
 
   import SaveEntry from "./SaveEntry.svelte";
   import DeleteEntry from "./DeleteEntry.svelte";
@@ -21,23 +18,6 @@
 
     $blog.writeBlog = false;
   }
-
-  interface WorkerApi {
-    encryptLog: (
-      entry: Buffer,
-      pubKey: string
-    ) => Promise<{ encrypted: string }>;
-  }
-  let worker: Worker | undefined;
-  let workerApi: WorkerApi;
-  onMount(() => {
-    worker = new encrypt();
-    workerApi = wrap<WorkerApi>(worker);
-  });
-
-  onDestroy(() => {
-    worker?.terminate();
-  });
 </script>
 
 <Toaster />
@@ -110,7 +90,7 @@
       </div>
 
       <DeleteEntry />
-      <SaveEntry encryptLog={workerApi.encryptLog} />
+      <SaveEntry />
     </div>
   {/if}
 </nav>

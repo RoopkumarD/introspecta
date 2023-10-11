@@ -1,17 +1,8 @@
-import { expose } from "comlink";
-import sodium, { ready as sodiumReady } from "libsodium-wrappers";
-
-const workerApi = {
-  encryptLog: encryptLog,
-};
-
-(async () => {
-  await sodiumReady;
-
-  expose(workerApi);
-})();
+import sodium from "libsodium-wrappers";
 
 async function encryptLog(entry: Uint8Array, pubKey: string) {
   const encrypted = sodium.crypto_box_seal(entry, sodium.from_hex(pubKey));
   return { encrypted: encrypted };
 }
+
+export { encryptLog };
