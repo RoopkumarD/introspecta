@@ -12,16 +12,16 @@
   const entriesStore = createStore("introspecta", "entries");
 
   async function saveLog() {
+    if ($journalling.usedIds === undefined) {
+      toast.error("UsedIds set is undefined, contact me");
+      return;
+    }
+
     const timestamp = new Date().getTime();
 
     if ($journalling.updateIndex !== -1) {
       const { encrypted } = await encryptLog(
-        pack({
-          title: $blog.title,
-          content: $blog.content,
-          timestamp: timestamp,
-          journal: $blog.journal,
-        }),
+        pack([$blog.title, $blog.content, timestamp, $blog.journal]),
         $journalling.pubKey
       );
 
@@ -60,12 +60,7 @@
       $journalling.updateIndex = -1;
     } else {
       const { encrypted } = await encryptLog(
-        pack({
-          title: $blog.title,
-          content: $blog.content,
-          timestamp: timestamp,
-          journal: $journalling.currentJournal,
-        }),
+        pack([$blog.title, $blog.content, timestamp, $blog.journal]),
         $journalling.pubKey
       );
 
@@ -79,6 +74,8 @@
         toast.error("Err while saving entry to indexeddb");
         return;
       }
+
+      $journalling.usedIds.add($blog.id);
 
       // updating ui
       $journalling.entries[$blog.journal] = [

@@ -1,12 +1,7 @@
 import { expose } from "comlink";
 import sodium, { ready as sodiumReady } from "libsodium-wrappers";
-// import { decode } from "msgpack-lite";
 import { unpack } from "msgpackr";
-
-interface EncryptedEntries {
-  id: string;
-  entry: Uint8Array;
-}
+import type { EncryptedEntries, entry } from "$lib/types";
 
 interface DecryptedLogs {
   id: string;
@@ -99,9 +94,16 @@ async function decryptingAllLogs(
       publicKey,
       privateKey,
     );
+
+    const log: entry = unpack(decryptedTextBuf);
     decrypted.push({
       id: logs[i].id,
-      log: unpack(decryptedTextBuf),
+      log: {
+        title: log[0],
+        content: log[1],
+        timestamp: log[2],
+        journal: log[3],
+      },
     });
   }
 

@@ -1,4 +1,4 @@
-import type { EncryptedEntries } from "$lib/types";
+import type { EncryptedEntries, serialisedEntries } from "$lib/types";
 import { PUBLIC_API_KEY_DEV, PUBLIC_CLIENT_ID_DEV } from "$env/static/public";
 import { pack, unpack } from "msgpackr";
 
@@ -93,7 +93,7 @@ export async function getFileMetadata(): Promise<
 export async function downloadFile(
   fileId: string,
 ): Promise<
-  | EncryptedEntries[]
+  | serialisedEntries[]
   | "errDownloadData"
   | "errWhileUnpackingBuffer"
   | "notAuthorized"
@@ -122,7 +122,7 @@ export async function downloadFile(
   const data = await response.arrayBuffer();
   const uint = new Uint8Array(data);
 
-  let dataArr: EncryptedEntries[];
+  let dataArr: serialisedEntries[];
   try {
     dataArr = unpack(uint);
   } catch (err) {
@@ -150,7 +150,7 @@ export async function deleteIntrospectaFile(
 
 export async function uploadDataToDrive(
   pubKey: string,
-  dataArr: EncryptedEntries[],
+  dataArr: serialisedEntries[],
 ): Promise<
   "notAuthorized" | "errUpload" | { id: string; modifiedTime: string }
 > {
@@ -205,7 +205,7 @@ export async function uploadDataToDrive(
 
 export async function updateDataOfDrive(
   fileId: string,
-  dataArr: EncryptedEntries[],
+  dataArr: serialisedEntries[],
 ): Promise<"notAuthorized" | "errUpload" | { modifiedTime: string }> {
   const entries = dataArr.length.toString();
 

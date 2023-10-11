@@ -31,6 +31,7 @@
     const { publicKey } = await workerApi.generateKeyPairs(passphrase.join(""));
     localStorage.setItem("pubKey", publicKey);
     $journalling.pubKey = publicKey;
+    $journalling.usedIds = new Set();
     $journalling.currentJournal = "default";
     $journalling.journals = ["default"];
     $journalling.entries = {

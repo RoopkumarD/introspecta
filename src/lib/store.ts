@@ -24,6 +24,7 @@ interface Journalling {
   updateIndex: number;
   journals: string[];
   entries: entries;
+  usedIds: Set<string> | undefined;
 }
 
 const journalling = writable<Journalling>({
@@ -32,6 +33,7 @@ const journalling = writable<Journalling>({
   updateIndex: -1,
   journals: [],
   entries: {},
+  usedIds: undefined,
 });
 
 const blog = writable({

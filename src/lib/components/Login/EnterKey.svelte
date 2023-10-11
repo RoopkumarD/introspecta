@@ -5,9 +5,9 @@
   import { wrap } from "comlink";
   import toast, { Toaster } from "svelte-french-toast";
   import { stage, journalling } from "$lib/store";
-  import { createStore, values, setMany, clear } from "idb-keyval";
+  import { createStore, values, setMany, clear, keys } from "idb-keyval";
   import { pack } from "msgpackr";
-  import { hashData } from "$lib/utils";
+  import { deserialiseDriveData, hashData } from "$lib/utils";
   import {
     SCOPES,
     CLIENT_ID,
@@ -97,16 +97,19 @@
             return;
           }
 
-          encryptedEntries = data;
+          const deserialised = deserialiseDriveData(data);
+          encryptedEntries = deserialised;
 
           localStorage.setItem("lastSyncTime", modifiedTime);
           localStorage.setItem("fileId", dataFileId);
           localStorage.setItem("dataHash", dataHash);
           localStorage.setItem("pubKey", pubKey);
 
-          let idbData: [string, EncryptedEntries][] = data.map((data) => {
-            return [data.id, data];
-          });
+          let idbData: [string, EncryptedEntries][] = deserialised.map(
+            (data) => {
+              return [data.id, data];
+            }
+          );
 
           await clear(entriesStore);
           setMany(idbData, entriesStore);
@@ -134,10 +137,14 @@
     const arrObject = Object.entries(decryptedEntries);
 
     if (arrObject.length !== 0) {
+      const ids: string[] = await keys(entriesStore);
+
+      $journalling.usedIds = new Set(ids);
       $journalling.currentJournal = arrObject[0][0];
       $journalling.journals = Object.keys(decryptedEntries);
       $journalling.entries = decryptedEntries;
     } else {
+      $journalling.usedIds = new Set();
       $journalling.currentJournal = "default";
       $journalling.journals = ["default"];
       $journalling.entries = { default: [] };

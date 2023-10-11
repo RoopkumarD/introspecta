@@ -1,8 +1,37 @@
 <script lang="ts">
   import { blog, journalling } from "$lib/store";
+  import { genShortUUID } from "$lib/utils";
+  import toast, { Toaster } from "svelte-french-toast";
+
+  function getId() {
+    if ($journalling.usedIds === undefined) {
+      console.error("usedIds is undefined");
+      return null;
+    }
+
+    for (let i = 0; i < 10; i++) {
+      let id = genShortUUID();
+
+      if (!$journalling.usedIds.has(id)) {
+        return id;
+      }
+    }
+
+    console.error(
+      "All the 10 consecutive generated keys are already present in db, heavy problem"
+    );
+    return null;
+  }
 
   function createLog() {
-    $blog.id = crypto.randomUUID();
+    let id = getId();
+
+    if (id === null) {
+      toast.error("Wasn't able to create new log due to id prob, contact me");
+      return;
+    }
+
+    $blog.id = id;
     $blog.title = "";
     $blog.content = "";
     $blog.journal = $journalling.currentJournal;
@@ -10,6 +39,8 @@
     $blog.writeBlog = true;
   }
 </script>
+
+<Toaster />
 
 <main class="h-[calc(100vh-66px)] flex justify-center items-center">
   <button on:click={createLog} class="text-4xl h-max btn drop-shadow-sm p-4">

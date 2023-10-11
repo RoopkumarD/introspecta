@@ -8,7 +8,11 @@
     delMany,
   } from "idb-keyval";
   import type { EncryptedEntries } from "$lib/types";
-  import { hashData } from "$lib/utils";
+  import {
+    deserialiseDriveData,
+    hashData,
+    serialiseDataForDrive,
+  } from "$lib/utils";
   import { pack } from "msgpackr";
   import { journalling, stage } from "$lib/store";
   import {
@@ -184,7 +188,12 @@
       }
     }
 
-    const uploadDataResult = await uploadDataToDrive($journalling.pubKey, data);
+    const serialisedData = serialiseDataForDrive(data);
+
+    const uploadDataResult = await uploadDataToDrive(
+      $journalling.pubKey,
+      serialisedData
+    );
 
     if (uploadDataResult === "notAuthorized") {
       errMessage =
@@ -279,6 +288,8 @@
         return;
       }
 
+      let deserialised = deserialiseDriveData(retrieveData);
+
       // then updating the local data
       let oldKeys: string[] = [];
 
@@ -288,7 +299,7 @@
         }
       });
 
-      const driveKeys = retrieveData.map((entry) => {
+      const driveKeys = deserialised.map((entry) => {
         return entry.id;
       });
 
@@ -304,7 +315,7 @@
       // now adding or updating data from drive data
       let updates: [string, EncryptedEntries][] = [];
 
-      for (let entry of retrieveData) {
+      for (let entry of deserialised) {
         if (entry.lastSyncTime > unixLastSyncTime) {
           updates.push([entry.id, entry]);
         }
@@ -382,7 +393,8 @@
     // thus also accounting of case where a entry is deleted
     if (localHash !== dataHash) {
       // uploading to drive
-      const updateDataResult = await updateDataOfDrive(fileId, finalData);
+      const serialised = serialiseDataForDrive(finalData);
+      const updateDataResult = await updateDataOfDrive(fileId, serialised);
 
       if (updateDataResult === "notAuthorized") {
         await Promise.all(
@@ -572,8 +584,8 @@
         >
       </div>
       <p class="bg-base-200 font-semibold p-4 rounded-md">
-        I found that the account you choose already has some existing data
-        related to this app. Are you sure, you want to overwrite all the data
+        I found {entries} entries in this google account drive. Are you sure, you
+        want to overwrite all the data
       </p>
       <div class="flex justify-evenly w-full">
         <button

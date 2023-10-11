@@ -6,7 +6,11 @@
   const entriesStore = createStore("introspecta", "entries");
 
   async function deleteLog() {
-    console.log($journalling.updateIndex);
+    if ($journalling.usedIds === undefined) {
+      toast.error("UsedIds set is undefined, contact me");
+      return;
+    }
+
     if ($journalling.updateIndex === -1) {
       // going back to home
       $blog.id = "";
@@ -25,6 +29,8 @@
     }
 
     $journalling.entries[$blog.journal].splice($journalling.updateIndex, 1);
+
+    $journalling.usedIds.delete($blog.id);
 
     $journalling.updateIndex = -1;
 
