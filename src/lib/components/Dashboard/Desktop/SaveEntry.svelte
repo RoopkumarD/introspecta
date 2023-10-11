@@ -3,7 +3,7 @@
   import { pack } from "msgpackr";
   import { update, set, createStore } from "idb-keyval";
   import toast from "svelte-french-toast";
-  import { encryptLog } from "$lib/encrypt";
+  import { encryptLog } from "$lib/libsodium";
 
   const entriesStore = createStore("introspecta", "entries");
 

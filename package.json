@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^2.1.0",
-    "@sveltejs/kit": "^1.25.1",
+    "@sveltejs/kit": "^1.25.2",
     "@types/gapi": "^0.0.45",
     "@types/gapi.client.drive-v3": "^0.0.1",
     "@types/libsodium-wrappers": "^0.7.11",
@@ -28,7 +28,6 @@
   },
   "type": "module",
   "dependencies": {
-    "comlink": "^4.4.1",
     "idb-keyval": "^6.2.1",
     "libsodium-wrappers": "^0.7.13",
     "msgpackr": "^1.9.9"

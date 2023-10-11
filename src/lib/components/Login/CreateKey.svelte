@@ -3,7 +3,7 @@
   import eff from "$lib/diceware/eff";
   import { journalling, stage } from "$lib/store";
   import { clear, createStore } from "idb-keyval";
-  import { generateKeyPairs } from "$lib/createAcc";
+  import { generateKeyPairs } from "$lib/libsodium";
 
   const passphrase = getWords(5, 5, eff);
   let backed = false;

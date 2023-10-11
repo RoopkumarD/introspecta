@@ -1,6 +1,23 @@
+import sodium from "libsodium-wrappers";
 import { unpack } from "msgpackr";
 import type { EncryptedEntries, entry } from "$lib/types";
-import sodium from "libsodium-wrappers";
+
+export async function generateKeyPairs(passphrase: string) {
+  const encoder = new TextEncoder();
+  const passBuf = encoder.encode(passphrase);
+
+  const seed = sodium.crypto_generichash(sodium.crypto_box_SEEDBYTES, passBuf);
+  const { publicKey } = sodium.crypto_box_seed_keypair(seed);
+
+  return {
+    publicKey: sodium.to_hex(publicKey),
+  };
+}
+
+export async function encryptLog(entry: Uint8Array, pubKey: string) {
+  const encrypted = sodium.crypto_box_seal(entry, sodium.from_hex(pubKey));
+  return { encrypted: encrypted };
+}
 
 interface DecryptedLogs {
   id: string;
@@ -14,18 +31,6 @@ interface DecryptedLogs {
 
 interface SortedJournals {
   [journalName: string]: DecryptedLogs[];
-}
-
-export async function generateKeyPairs(passphrase: string) {
-  const encoder = new TextEncoder();
-  const passBuf = encoder.encode(passphrase);
-
-  const seed = sodium.crypto_generichash(sodium.crypto_box_SEEDBYTES, passBuf);
-  const { publicKey } = sodium.crypto_box_seed_keypair(seed);
-
-  return {
-    publicKey: sodium.to_hex(publicKey),
-  };
 }
 
 export async function decrypt(

@@ -13,7 +13,7 @@
     getFileMetadata,
     revokeAccessToken,
   } from "$lib/googleDrive";
-  import { generateKeyPairs, decrypt } from "$lib/decrypt";
+  import { generateKeyPairs, decrypt } from "$lib/libsodium";
 
   export let createKey: boolean;
 
