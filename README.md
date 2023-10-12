@@ -24,6 +24,8 @@ That's why I'm working on a feature to save all your encrypted entries to your G
 
 In summary, I'd like to emphasize that this online diary is different from platforms like Day One, where it handle everything. This web app is simply a tool that empowers you to write your diary, automatically encrypts the data, and backs it up to your Google Drive without you needing to understand the technical details. Your role is to create entries and let the app do the rest.
 
+![3](https://github.com/RoopkumarD/introspecta/assets/120183778/e8322fd3-c8ce-47f7-ae8b-97462ef1a6c3)
+
 ## Thanks to These Projects That Made This Web App Possible
 
 - [Sveltekit](https://kit.svelte.dev/) - The primary framework used to create this app
@@ -36,6 +38,7 @@ In summary, I'd like to emphasize that this online diary is different from platf
 ## The Complete Cryptographic System Used in This App
 
 Coming soon...
+
 
 ## Final Words
 
