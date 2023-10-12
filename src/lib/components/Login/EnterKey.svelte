@@ -265,24 +265,50 @@
 <Toaster />
 
 <dialog class="modal" bind:this={noPubKeyDialog}>
-  <div class="modal-box w-max flex flex-col items-center">
-    <p class="font-medium">
-      There is no public key saved in this browser. If you have a account and
-      have synced with your google drive
-    </p>
-    <p class="font-medium">
-      Then click below and choose the account, so that i can retrieve those
-      saved keys
-    </p>
-    {#if modalState === "retrievingPubKey"}
-      <p>Retrieving the public key from drive ....</p>
-    {/if}
+  <div class="modal-box flex flex-col items-center pt-3 pb-6 px-4">
+    <div class="w-full flex justify-end mb-2">
+      <button on:click={() => noPubKeyDialog.close()} class="btn btn-sm"
+        >close</button
+      >
+    </div>
     {#if modalState === "getAccessToken"}
+      <p class="mb-2 text-center">
+        You can't enter the key because there is no diary record in this
+        browser. However, if you have one and you've synced all your entries to
+        your drive, please grant me access to your drive by clicking the button
+        below so that I can retrieve those records.
+      </p>
       <button on:click={getAccessToken} class="btn-primary btn btn-sm btn-wide"
         >Choose Drive Account</button
       >
+      <a href="#" class="link mt-2"
+        >privacy links, will redirect to github privacy md</a
+      >
+    {/if}
+    {#if modalState === "retrievingPubKey"}
+      <div class="waviy">
+        <span style="--i:1">R</span>
+        <span style="--i:2">e</span>
+        <span style="--i:3">t</span>
+        <span style="--i:4">r</span>
+        <span style="--i:5">i</span>
+        <span style="--i:6">e</span>
+        <span style="--i:7">v</span>
+        <span style="--i:9">i</span>
+        <span style="--i:10">n</span>
+        <span style="--i:11">g</span>
+        <span style="--i:12">.</span>
+        <span style="--i:13">.</span>
+      </div>
+
+      <p>the public key from drive</p>
     {/if}
     {#if modalState === "chooseAnotherAccount"}
+      <p class="mb-2 text-center">
+        Cool got the pubKey and also found the records. Now you can try to
+        unlock, but if you feel like you choosed the wrong account. Don't worry,
+        you can redo this process by clicking below
+      </p>
       <button
         on:click={() => {
           revokeAccessToken();
@@ -291,32 +317,31 @@
         }}
         class="btn-primary btn btn-sm btn-wide">Change Drive Account</button
       >
-      <p>
-        Got the pubkey, now you can try to login with the passphrase. But if you
-        choosed the wrong account don't worry just change it through above
-        button
-      </p>
     {/if}
     {#if modalState === "errShow"}
-      <p class="mt-4">
+      <p class="text-center">
         There was a problem, please refer me the below error message at
         roopkumards@gmail.com
       </p>
       <p>{errMessage}</p>
     {/if}
     <div class="divider">OR</div>
-    <p class="font-medium">
-      If you want to create new account, then click on create a account option
-      below the login
+    <p class="mb-1">If you don't have diary, create a new one by clicking on</p>
+    <p class="text-secondary text-xl underline mb-2 font-medium">
+      create a diary
     </p>
-    <button
-      on:click={() => noPubKeyDialog.close()}
-      class="btn-secondary btn btn-sm btn-wide">close</button
+    <p class="mb-2">located below this button</p>
+    <div
+      class="py-1 w-[250px] rounded-md text-neutral-content bg-neutral font-medium uppercase text-sm text-center leading-4"
     >
+      you can't open diary<br />click to know
+    </div>
   </div>
 </dialog>
 
-<div class="absolute bottom-10 right-10 font-bold bg-accent p-2 rounded-md">
+<div
+  class="absolute bottom-10 right-10 font-bold bg-accent p-2 rounded-md hidden xl:block"
+>
   <p class=""><span class="underline">Pro tip: </span> Use tab to</p>
   <p>switch to next input box</p>
 </div>
@@ -338,7 +363,7 @@
       <button
         on:click={() => noPubKeyDialog.showModal()}
         class="btn btn-neutral btn-wide mb-2"
-        >you can't open journals, click to know</button
+        >you can't open diary<br />click to know</button
       >
     {/if}
     {#if pubKey !== null}
@@ -350,7 +375,29 @@
     <button
       on:click={() => (createKey = true)}
       class="btn btn-link lowercase text-secondary text-xl"
-      >create a account</button
+      >create a diary</button
     >
   </div>
 </main>
+
+<style>
+  /* credits -> https://codepen.io/alvarotrigo/pen/bGrXmwM*/
+  .waviy {
+    position: relative;
+  }
+  .waviy span {
+    position: relative;
+    display: inline-block;
+    font-size: 40px;
+    color: #fff;
+    text-transform: uppercase;
+    animation: flip 4s infinite;
+    animation-delay: calc(0.2s * var(--i));
+  }
+  @keyframes flip {
+    0%,
+    80% {
+      transform: rotateY(360deg);
+    }
+  }
+</style>

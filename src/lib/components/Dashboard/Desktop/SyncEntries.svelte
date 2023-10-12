@@ -486,14 +486,13 @@
         >
       </div>
       <p class="font-semibold bg-base-200 rounded-md p-4">
-        Sry, I know i am being annoying here. But before syncing, please go to
-        settings backup section where i have explained how sync works. Don't
-        worry it won't involved any technical details. It's just answer question
-        like why do you have to login again and again and when you should sync
-        ideally
+        Hey, before syncing, I would recommend that you go to the settings and
+        read the FAQs under the backup section. There, I've answered questions
+        like why you need to log in repeatedly and a few more. Don't worry; it
+        won't take much of your time :)
       </p>
       <button on:click={getAccessToken} class="btn-secondary btn btn-wide"
-        >Google Login</button
+        >Google Drive Login</button
       >
     {/if}
     {#if state === "syncPrompt"}
@@ -503,11 +502,10 @@
         >
       </div>
       <p class="font-semibold bg-base-200 rounded-md p-4">
-        Sry, I know i am being annoying here. But before syncing, please go to
-        settings backup section where i have explained how sync works. Don't
-        worry it won't involved any technical details. It's just answer question
-        like why do you have to login again and again and when you should sync
-        ideally
+        Great, you can now sync and store data in your account's drive storage.
+        If you've selected the wrong account, don't worry – you can change it by
+        clicking the 'Change Account' button. Otherwise, you can proceed with
+        'sync now'.
       </p>
       <div class="flex justify-evenly w-full">
         <button
@@ -524,8 +522,8 @@
     {/if}
     {#if state === "syncing"}
       <div class="flex flex-col justify-center items-center">
-        <div class="loader" />
-        <strong class="mt-6">
+        <span class="loading loading-dots loading-lg" />
+        <strong class="mt-1">
           Cool, just a sec, let me sync stuff in background
         </strong>
       </div>
@@ -612,23 +610,3 @@
     {/if}
   </div>
 </dialog>
-
-<style lang="postcss">
-  .loader {
-    border: 1rem solid hsl(var(--n));
-    border-top: 1rem solid hsl(var(--nc));
-    border-radius: 50%;
-    width: 8rem;
-    height: 8rem;
-    animation: spin 2s linear infinite;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-</style>

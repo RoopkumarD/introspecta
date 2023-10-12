@@ -75,5 +75,5 @@
 {#if createKey === false}
   <EnterKey bind:createKey />
 {:else}
-  <CreateKey />
+  <CreateKey bind:createKey />
 {/if}
