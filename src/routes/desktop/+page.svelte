@@ -4,7 +4,7 @@
   import { stage } from "$lib/store";
   import { API_KEY, DISCOVERY_DOC } from "$lib/googleDrive";
   import { onMount } from "svelte";
-  import sodium from "libsodium-wrappers";
+  import { sodiumReady } from "$lib/libsodium";
 
   function gapiLoaded() {
     window.gapi.load("client", initializeGapiClient);
@@ -17,8 +17,8 @@
     });
   }
 
-  onMount(async () => {
-    await sodium.ready;
+  onMount(() => {
+    sodiumReady();
   });
 </script>
 

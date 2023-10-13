@@ -2,6 +2,11 @@ import sodium from "libsodium-wrappers";
 import { unpack } from "msgpackr";
 import type { EncryptedEntries, entry } from "$lib/types";
 
+export async function sodiumReady() {
+  await sodium.ready;
+  return;
+}
+
 export async function generateKeyPairs(passphrase: string) {
   const encoder = new TextEncoder();
   const passBuf = encoder.encode(passphrase);
