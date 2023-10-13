@@ -1,49 +1,75 @@
-# Introspecta - Beta
+<div align="center">
+  <h1 align="center">📓 Introspecta - Beta Version</h1>
+  <h3>Your Personal Web Diary App Focused on Privacy</h3>
+</div>
 
-Introspecta is a tool/platform that allows you to journal your life with complete privacy, and the best part is, it's entirely free! This app doesn't store your logs in the cloud, nor does it ask for your email (except during the backup process, as explained in the "Backing Up" section).
+<div align="center">
+  <a href="https://introspecta.vercel.app">Try Introspecta</a>
+</div>
 
-Think of this app as a digital diary with a lock and key. When you create an account, you receive a set of passphrases that you'll use to access your journal every time you visit the app. These same passphrases encrypt all your entries, and I don't store them anywhere. If you lose them, I won't be able to help you recover your keys. This app provides a safe haven where your entries remain confidential, even from me.
+---
 
-![thumbnail](https://github.com/RoopkumarD/introspecta/assets/120183778/4f612466-7094-4b98-87b0-188d3af4200d)
+Introspecta is a web diary app that prioritizes privacy and data ownership, allowing you to reflect on your life without the worry of anyone else seeing it. Continue reading to learn how this app handles your diary entries and data.
 
-## Getting Started
+## Quick Overview
 
-When you first visit the app, you'll encounter an "Enter Key" screen. This is where you provide the key to unlock your diary. Since you don't have account, you can click on "Create a New Account," and there you'll see that it generates five words to serve as your passphrase. This passphrase encrypts all your logs.
+- **Secure Entries**: When you create a new diary, the app automatically generates a unique 5-word passphrase that you don't need to provide. This passphrase serves as the key to unlocking your diary entries.
 
-## Entry Writer
+- **Local Storage**: All your diary entries are securely stored in encrypted form within your browser's IndexedDB, ensuring that no data is transmitted to external servers.
 
-You can create, edit, and delete your diary entries, just like you would with other apps. Additionally, this app offers a feature to organize entries into different journals. You can create as many journals as you want, and there's no charge for it.
+- **Backup and Sync**: To prevent data loss, I offer an option to back up and sync your entries with your Google Drive account.
 
-## Where Are My Entries Stored?
+![Creating Diary](https://github.com/RoopkumarD/introspecta/assets/120183778/07c8359f-3efb-4992-af09-7fa33bd4945f)
 
-Your diary entries are stored directly in your browser, which means you don't have to wait long for decryption because I'm not fetching them from the cloud. However, you may be concerned that browser data is vulnerable to accidental deletion, and you may want to access your diary from multiple devices.
+## Why I Consider This App a Tool
 
-## Backup?
+You can essentially perform the same tasks that this app offers by creating a text file, writing entries, encrypting them using [OpenPGP](https://www.openpgp.org/), and manually backing up your content to your Google Drive account. However, I've developed this app to streamline and automate these processes.
 
-That's why I'm working on a feature to save all your encrypted entries to your Google Drive account. This way, you won't have to trust me with your data, and it'll be entirely secure within your Google account (unless Google decides to discontinue Google Drive, which is highly unlikely). While I'm still implementing this feature, you can explore how the app feels and functions.
+Going forward, I will continue to steer this app in the direction of becoming a more comprehensive tool for users to effortlessly create and manage their entries.
 
-In summary, I'd like to emphasize that this online diary is different from platforms like Day One, where it handle everything. This web app is simply a tool that empowers you to write your diary, automatically encrypts the data, and backs it up to your Google Drive without you needing to understand the technical details. Your role is to create entries and let the app do the rest.
+## Tech Stack
 
-![3](https://github.com/RoopkumarD/introspecta/assets/120183778/e8322fd3-c8ce-47f7-ae8b-97462ef1a6c3)
-![1](https://github.com/RoopkumarD/introspecta/assets/120183778/07c8359f-3efb-4992-af09-7fa33bd4945f)
-![2](https://github.com/RoopkumarD/introspecta/assets/120183778/46ca50be-f88c-4c42-a106-537d572a249f)
+- [Sveltekit](https://kit.svelte.dev/): Primary framework for building this app.
+- [Vercel](https://vercel.com): Hosting my web app with reliability.
+- [Svelte French Toast](https://svelte-french-toast.com/): Used for displaying toasts.
+- [daisyui](https://daisyui.com/): Pre-built Tailwind CSS components.
+- [idb-keyval](https://github.com/jakearchibald/idb-keyval): Simplified storage of entries in IndexedDB.
+- [libsodium-wrappers](https://www.npmjs.com/package/libsodium-wrappers): For cryptographic APIs.
+- [Google Sign-In](https://developers.google.com/identity/gsi/web/guides/overview): Secure Google account authorization.
+- [Google API JavaScript Client](https://github.com/google/google-api-javascript-client): Api's helping store data in your Google Drive.
+- [Msgpackr](https://github.com/kriszyp/msgpackr): To serialise data which is stored in your Drive.
+
+## The Cryptographic and Backup System
+
+All the magic happens within the [libsodium.ts](https://github.com/RoopkumarD/introspecta/blob/main/src/lib/libsodium.ts) file.
+
+### Crafting an Entry
+
+I utilize the 5 words to generate public and private key pairs. The public key is employed with the libsodium crypto seal box, which in turn creates an ephemeral secret key used to encrypt individual diary entries. The public key encrypts this secret key and appends it to the encrypted log. You can get an in-depth look into this process in the [SaveEntry.svelte](https://github.com/RoopkumarD/introspecta/blob/main/src/lib/components/Dashboard/Desktop/SaveEntry.svelte) component. 
+
+![Creating Entry](https://github.com/RoopkumarD/introspecta/assets/120183778/46ca50be-f88c-4c42-a106-537d572a249f)
 
 
+### Why You Need to Enter Your Passphrase Each Time You Open the App
 
-## Thanks to These Projects That Made This Web App Possible
+Every time you open the app, it's necessary to enter your passphrase. This is because all of your diary entries are securely stored in encrypted form within IndexedDB. To access and use your entries, the app needs to decrypt them. When you provide your passphrase, it generates the required public and private keys, which are then used to decrypt your entries. Once decrypted, your entries are temporarily stored in memory for you to access and use. For a deep dive into this process, explore the [EnterKey.svelte](https://github.com/RoopkumarD/introspecta/blob/main/src/lib/components/Login/EnterKey.svelte) component.
 
-- [Sveltekit](https://kit.svelte.dev/) - The primary framework used to create this app
-- [Svelte french toast](https://svelte-french-toast.com/) - Used for displaying toasts
-- [Comlink](https://github.com/GoogleChromeLabs/comlink) - Employed for communication with web workers (because I don't enjoy working with message events)
-- [idb-keyval](https://github.com/jakearchibald/idb-keyval) - Simplified storage of entries in IndexedDB
-- [libsodium-wrappers](https://www.npmjs.com/package/libsodium-wrappers) - Provides cryptographic APIs
-- [daisyui](https://daisyui.com/) - Pre-built Tailwind CSS components
+### Backup and Sync
 
-## The Complete Cryptographic System Used in This App
+App uses implicit flow to obtain a temporary access token, which the app needs to manage and modify data in your Google Drive storage. No worries, I've limited the access token's scope to only include files created by this app.
 
-Coming soon...
+Additionally, since I'm utilizing the implicit flow, you'll need to grant access by accepting Google's consent form during each app session.
 
+For a deep dive into this process, explore the [SyncEntries.svelte](https://github.com/RoopkumarD/introspecta/blob/main/src/lib/components/Dashboard/Desktop/SyncEntries.svelte) component and this file [googleDrive.ts](https://github.com/RoopkumarD/introspecta/blob/main/src/lib/googleDrive.ts).
 
-## Final Words
+![Syncing Backup](https://github.com/RoopkumarD/introspecta/assets/120183778/e8322fd3-c8ce-47f7-ae8b-97462ef1a6c3)
 
-I haven't officially released the web app yet because I'm still working on implementing the backup system. However, you can check out the app by cloning it and let me know your thoughts. If you find the UI less than impressive, don't hesitate to tell me directly via DM ([twitter](https://twitter.com/Roopkd_) or [email](mailto:roopkumards@gmail.com)) or open an issue. I'm committed to improving this app, and your feedback is highly valuable.
+## Contribution
+
+Introspecta is an open-source project, and I wholeheartedly welcome contributions from the community. You're encouraged to fork the repository, make your enhancements, and submit pull requests.
+
+I genuinely value your feedback and suggestions. If you run into issues or have any ideas, please don't hesitate to open an issue or reach out to me on [Twitter](https://twitter.com/Roopkd_) or via [email](mailto:roopkumards@gmail.com).
+
+## Parting Thoughts
+
+Introspecta is currently in beta, and I'm eager to hear your thoughts and experiences. Feel free to make it your daily diary app, as I won't introduce any disruptive changes. Your insights and feedback are immensely appreciated as I continue to refine the app.
