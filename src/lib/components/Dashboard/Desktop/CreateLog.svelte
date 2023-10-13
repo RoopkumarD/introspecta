@@ -9,25 +9,23 @@
       return null;
     }
 
-    for (let i = 0; i < 10; i++) {
-      let id = genShortUUID();
+    let id = genShortUUID();
 
-      if (!$journalling.usedIds.has(id)) {
-        return id;
-      }
+    if ($journalling.usedIds.has(id)) {
+      console.error("Used id was generated");
+      return null;
     }
 
-    console.error(
-      "All the 10 consecutive generated keys are already present in db, heavy problem"
-    );
-    return null;
+    return id;
   }
 
   function createLog() {
     let id = getId();
 
     if (id === null) {
-      toast.error("Wasn't able to create new log due to id prob, contact me");
+      toast.error(
+        "Wasn't able to create new log due to id generate, retry again"
+      );
       return;
     }
 
