@@ -494,8 +494,10 @@
       </p>
       <p class="font-medium">Choose Google Drive Account:</p>
       <GoogleButton {getAccessToken} />
-      <a href="#" class="link mt-1"
-        >privacy links, will redirect to github privacy md</a
+      <a
+        href="https://github.com/RoopkumarD/introspecta/blob/main/user-data.md"
+        target="_blank"
+        class="link mt-2 text-center">How data is handled by this app</a
       >
     {/if}
     {#if state === "syncPrompt"}
