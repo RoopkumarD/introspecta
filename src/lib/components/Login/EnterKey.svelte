@@ -375,7 +375,10 @@
     {/if}
     <div class="divider">OR</div>
     <button
-      on:click={() => (createKey = true)}
+      on:click={() => {
+        revokeAccessToken();
+        createKey = true;
+      }}
       class="btn btn-link lowercase text-secondary text-xl"
       >create a diary</button
     >
