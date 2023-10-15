@@ -2,7 +2,7 @@
   import DesktopHome from "$lib/components/Dashboard/Desktop/DesktopHome.svelte";
   import Login from "$lib/components/Login/Login.svelte";
   import { stage } from "$lib/store";
-  import { API_KEY, DISCOVERY_DOC } from "$lib/googleDrive";
+  import { API_KEY, DISCOVERY_DOC, CLIENT_ID } from "$lib/googleDrive";
   import { onMount } from "svelte";
   import { sodiumReady } from "$lib/libsodium";
 
@@ -27,6 +27,8 @@
 
   <script src="https://apis.google.com/js/api.js" on:load={gapiLoaded}></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
+
+  <meta name="google-signin-client_id" content={CLIENT_ID} />
 </svelte:head>
 
 <div class="hidden xl:block">

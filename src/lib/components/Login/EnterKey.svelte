@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Input from "./Input.svelte";
+  import GoogleButton from "$lib/components/GoogleButton.svelte";
   import toast, { Toaster } from "svelte-french-toast";
   import { stage, journalling } from "$lib/store";
   import { createStore, values, setMany, clear, keys } from "idb-keyval";
@@ -210,7 +211,6 @@
           return;
         }
 
-        // $sync.accessToken = res.access_token;
         modalState = changeModalState(modalState, "gotAccessToken");
         retrievePubKey();
       },
@@ -278,9 +278,8 @@
         your drive, please grant me access to your drive by clicking the button
         below so that I can retrieve those records.
       </p>
-      <button on:click={getAccessToken} class="btn-primary btn btn-sm btn-wide"
-        >Choose Drive Account</button
-      >
+      <p class="font-medium mb-1">Choose Google Drive Account:</p>
+      <GoogleButton {getAccessToken} />
       <a href="#" class="link mt-2"
         >privacy links, will redirect to github privacy md</a
       >
@@ -315,7 +314,8 @@
           pubKey = null;
           modalState = changeModalState(modalState, "yesChooseAnother");
         }}
-        class="btn-primary btn btn-sm btn-wide">Change Drive Account</button
+        class="btn-primary btn btn-sm btn-wide"
+        >Change Google Drive Account</button
       >
     {/if}
     {#if modalState === "errShow"}

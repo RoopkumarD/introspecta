@@ -24,7 +24,8 @@
     getFileMetadata,
     deleteIntrospectaFile,
   } from "$lib/googleDrive";
-  import { PUBLIC_CLIENT_ID_DEV } from "$env/static/public";
+  import { CLIENT_ID } from "$lib/googleDrive";
+  import GoogleButton from "$lib/components/GoogleButton.svelte";
 
   export let syncModalShow: boolean;
 
@@ -84,7 +85,7 @@
 
   async function getAccessToken() {
     clientInit = window.google.accounts.oauth2.initTokenClient({
-      client_id: PUBLIC_CLIENT_ID_DEV,
+      client_id: CLIENT_ID,
       scope: "https://www.googleapis.com/auth/drive.file",
       callback: (res) => {
         if (res.error) {
@@ -491,8 +492,10 @@
         like why you need to log in repeatedly and a few more. Don't worry; it
         won't take much of your time :)
       </p>
-      <button on:click={getAccessToken} class="btn-secondary btn btn-wide"
-        >Google Drive Login</button
+      <p class="font-medium">Choose Google Drive Account:</p>
+      <GoogleButton {getAccessToken} />
+      <a href="#" class="link mt-1"
+        >privacy links, will redirect to github privacy md</a
       >
     {/if}
     {#if state === "syncPrompt"}
@@ -501,23 +504,27 @@
           >close</button
         >
       </div>
-      <p class="font-semibold bg-base-200 rounded-md p-4">
+      <p class="font-medium bg-base-200 rounded-md p-4">
         Great, you can now sync and store data in your account's drive storage.
         If you've selected the wrong account, don't worry – you can change it by
-        clicking the 'Change Account' button. Otherwise, you can proceed with
-        'sync now'.
+        clicking the <span class="font-bold">Change Google Drive Account</span>
+        button. Otherwise, you can proceed with
+        <span class="font-bold">Sync and Backup to Google Drive</span>.
       </p>
-      <div class="flex justify-evenly w-full">
+      <div class="flex flex-col">
+        <button on:click={syncTime} class="btn normal-case"
+          ><img src="/driveLogo.png" alt="drive-logo" class="h-5 w-5" />Sync and
+          Backup to Google Drive</button
+        >
+        <div class="divider">OR</div>
         <button
           on:click={() => {
             revokeAccessToken();
             state = changeState(state, "changeAccount");
             return;
           }}
-          class="btn-info btn">Change Account</button
+          class="btn-info btn">Change Google Drive Account</button
         >
-
-        <button on:click={syncTime} class="btn-secondary btn">Sync Now</button>
       </div>
     {/if}
     {#if state === "syncing"}
