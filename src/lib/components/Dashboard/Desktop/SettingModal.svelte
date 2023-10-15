@@ -61,7 +61,7 @@
           type="text"
           bind:value={newJournalName}
           placeholder="name of journal..."
-          class="border-2 border-base-300 p-1"
+          class="border-2 border-base-300 p-1 mb-2 xl:mb-0"
         />
         <button on:click={addNewJournal} class="btn btn-sm btn-secondary"
           >add</button

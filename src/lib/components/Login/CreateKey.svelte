@@ -67,15 +67,9 @@
   class="font-inter flex flex-col items-center mt-10 lg:mt-24
   "
 >
-  <div class="w-full relative">
-    <button
-      class="absolute top-2 left-1/4 btn btn-sm"
-      on:click={() => (createKey = false)}>&lt;- Back</button
-    >
-    <h1 class="font-bold mb-8 text-2xl lg:text-5xl text-center">
-      Password Generated
-    </h1>
-  </div>
+  <h1 class="font-bold mb-8 text-2xl lg:text-5xl text-center">
+    Password Generated
+  </h1>
   <div
     class="mb-8 py-4 px-2 bg-base-300 flex flex-col lg:flex-row flex-wrap items-center
     justify-center w-3/4 lg:w-1/2 gap-4"
@@ -90,7 +84,7 @@
     <label class="label cursor-pointer space-x-10 lg:space-x-24">
       <div class="flex items-center gap-2">
         <div
-          class="tooltip tooltip-bottom font-medium"
+          class="tooltip tooltip-bottom font-medium xl:block hidden"
           data-tip="Write these 5 words in a paper where you feel safe or you
           can store it in your password manager"
         >
@@ -110,7 +104,7 @@
             /></svg
           >
         </div>
-        <span class="label-text text-lg font-medium">
+        <span class="label-text text-md xl:text-lg font-medium">
           I have backed up my password</span
         >
       </div>
