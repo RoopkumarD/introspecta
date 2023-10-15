@@ -4,7 +4,7 @@
 </div>
 
 <div align="center">
-  <a href="https://introspecta.vercel.app">Try Introspecta</a>
+  <a href="https://introspecta.vercel.app/desktop">Try Introspecta</a>
 </div>
 
 ---
@@ -45,10 +45,9 @@ All the magic happens within the [libsodium.ts](https://github.com/RoopkumarD/in
 
 ### Crafting an Entry
 
-I utilize the 5 words to generate public and private key pairs. The public key is employed with the libsodium crypto seal box, which in turn creates an ephemeral secret key used to encrypt individual diary entries. The public key encrypts this secret key and appends it to the encrypted log. You can get an in-depth look into this process in the [SaveEntry.svelte](https://github.com/RoopkumarD/introspecta/blob/main/src/lib/components/Dashboard/Desktop/SaveEntry.svelte) component. 
+I utilize the 5 words to generate public and private key pairs. The public key is employed with the libsodium crypto seal box, which in turn creates an ephemeral secret key used to encrypt individual diary entries. The public key encrypts this secret key and appends it to the encrypted log. You can get an in-depth look into this process in the [SaveEntry.svelte](https://github.com/RoopkumarD/introspecta/blob/main/src/lib/components/Dashboard/Desktop/SaveEntry.svelte) component.
 
 ![Creating Entry](https://github.com/RoopkumarD/introspecta/assets/120183778/46ca50be-f88c-4c42-a106-537d572a249f)
-
 
 ### Why You Need to Enter Your Passphrase Each Time You Open the App
 
