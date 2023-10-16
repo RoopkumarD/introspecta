@@ -23,8 +23,6 @@
 </script>
 
 <svelte:head>
-  <title>Introspecta</title>
-
   <script src="https://apis.google.com/js/api.js" on:load={gapiLoaded}></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
 
