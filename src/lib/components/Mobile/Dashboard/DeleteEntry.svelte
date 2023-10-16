@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { blog, journalling } from "$lib/store";
   import { createStore, del } from "idb-keyval";
   import toast from "svelte-french-toast";
@@ -18,6 +19,7 @@
       $blog.content = "";
 
       $blog.writeBlog = false;
+      goto("/mobile/app");
       return;
     }
 
@@ -39,7 +41,7 @@
     $blog.title = "";
     $blog.content = "";
 
-    $blog.writeBlog = false;
+    goto("/mobile/app");
   }
 </script>
 

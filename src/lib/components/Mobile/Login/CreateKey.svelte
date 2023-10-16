@@ -4,6 +4,7 @@
   import { journalling, stage } from "$lib/store";
   import { clear, createStore } from "idb-keyval";
   import { generateKeyPairs } from "$lib/libsodium";
+  import { goto } from "$app/navigation";
 
   const passphrase = getWords(5, 5, eff);
   let backed = false;
@@ -35,7 +36,9 @@
     $journalling.entries = {
       default: [],
     };
+
     $stage = "Dashboard";
+    goto("/mobile/app");
   }
 
   let dialog: HTMLDialogElement;

@@ -1,7 +1,9 @@
-<script>
-  import DeleteEntry from "$lib/components/Dashboard/Mobile/DeleteEntry.svelte";
-  import SaveEntry from "$lib/components/Dashboard/Mobile/SaveEntry.svelte";
+<script lang="ts">
+  import { Toaster } from "svelte-french-toast";
+  import DeleteEntry from "$lib/components/Mobile/Dashboard/DeleteEntry.svelte";
+  import SaveEntry from "$lib/components/Mobile/Dashboard/SaveEntry.svelte";
   import { blog, journalling } from "$lib/store";
+  import { goto } from "$app/navigation";
 
   function goToHome() {
     $blog.id = "";
@@ -9,9 +11,11 @@
     $blog.content = "";
     $journalling.updateIndex = -1;
 
-    $blog.writeBlog = false;
+    goto("/mobile/app");
   }
 </script>
+
+<Toaster />
 
 <nav
   class="flex justify-between items-center border-b-[1px] border-base-300 py-3 px-4"

@@ -531,7 +531,7 @@
     {/if}
     {#if state === "syncing"}
       <div class="flex flex-col justify-center items-center">
-        <span class="loading loading-dots loading-lg" />
+        <p>Loading...</p>
         <strong class="mt-1">
           Cool, just a sec, let me sync stuff in background
         </strong>

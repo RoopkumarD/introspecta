@@ -4,6 +4,7 @@
   import { update, set, createStore } from "idb-keyval";
   import toast from "svelte-french-toast";
   import { encryptLog } from "$lib/libsodium";
+  import { goto } from "$app/navigation";
 
   const entriesStore = createStore("introspecta", "entries");
 
@@ -93,7 +94,7 @@
     $blog.title = "";
     $blog.content = "";
 
-    $blog.writeBlog = false;
+    goto("/mobile/app");
   }
 </script>
 
