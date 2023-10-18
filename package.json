@@ -12,6 +12,7 @@
   "devDependencies": {
     "@sveltejs/adapter-vercel": "^3.0.3",
     "@sveltejs/kit": "^1.25.2",
+    "@tailwindcss/typography": "^0.5.10",
     "@types/gapi": "^0.0.45",
     "@types/gapi.client.drive-v3": "^0.0.1",
     "@types/libsodium-wrappers": "^0.7.11",
