@@ -18,11 +18,7 @@
 
     if (localStorage.getItem("pubKey") !== null && deletePreviousEntries) {
       // delete the previous stuff
-      const theme = localStorage.getItem("theme");
       localStorage.clear();
-      if (theme !== null) {
-        localStorage.setItem("theme", theme);
-      }
       const entriesStore = createStore("introspecta", "entries");
       await clear(entriesStore);
     }

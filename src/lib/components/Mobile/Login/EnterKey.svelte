@@ -17,22 +17,10 @@
   import { generateKeyPairs, decrypt } from "$lib/libsodium";
   import { goto } from "$app/navigation";
 
-  export let createKey: boolean;
-
   interface EncryptedEntries {
     id: string;
     entry: Uint8Array;
     lastSyncTime: number;
-  }
-
-  interface entry {
-    id: string;
-    log: {
-      title: string;
-      content: string;
-      timestamp: number;
-      journal: string;
-    };
   }
 
   // need to implement fsm for this, as user can just press unlock diary multiple times
@@ -351,7 +339,7 @@
   class="font-inter flex flex-col items-center mt-20
   "
 >
-  <h1 class="font-bold mb-8 text-3xl lg:text-5xl">Unlock Journal</h1>
+  <h1 class="font-bold mb-8 text-3xl lg:text-5xl">Unlock Diary</h1>
   <div
     class="mb-8 flex flex-wrap items-center justify-center w-full lg:w-1/2 gap-4"
   >
@@ -376,7 +364,7 @@
     <button
       on:click={() => {
         revokeAccessToken();
-        createKey = true;
+        goto("/mobile/create-diary");
       }}
       class="btn btn-link lowercase text-secondary text-xl"
       >create a diary</button

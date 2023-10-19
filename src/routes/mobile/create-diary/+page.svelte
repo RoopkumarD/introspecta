@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EnterKey from "$lib/components/Mobile/Login/EnterKey.svelte";
+  import CreateKey from "$lib/components/Mobile/Login/CreateKey.svelte";
   import ThemeChooser from "$lib/components/ThemeChooser.svelte";
 </script>
 
@@ -9,4 +9,4 @@
   </h1>
   <ThemeChooser />
 </nav>
-<EnterKey />
+<CreateKey />
