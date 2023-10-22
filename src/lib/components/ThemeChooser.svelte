@@ -1,5 +1,11 @@
 <script lang="ts">
   let themeSelected: boolean;
+  /*
+  I can basically
+    let themeSelected = document.documentElement.getAttribute("data-theme") === "" ? false : true;
+  But let's keep this way, i don't see any point of adding more execution for this
+  As this component is referenced at many places, thus this will execute alot.
+  */
 
   function updateTheme() {
     const one_year = 60 * 60 * 24 * 365;

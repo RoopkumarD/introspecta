@@ -1,6 +1,6 @@
 import sodium from "libsodium-wrappers";
 import { unpack } from "msgpackr";
-import type { EncryptedEntries, entry } from "$lib/types";
+import type { EncryptedEntries, entry, Entries } from "$lib/types";
 
 export async function sodiumReady() {
   await sodium.ready;
@@ -24,55 +24,41 @@ export async function encryptLog(entry: Uint8Array, pubKey: string) {
   return { encrypted: encrypted };
 }
 
-interface DecryptedLogs {
-  id: string;
-  log: {
-    title: string;
-    content: string;
-    timestamp: number;
-    journal: string;
-  };
-}
-
-interface SortedJournals {
-  [journalName: string]: DecryptedLogs[];
-}
-
 export async function decrypt(
   passphrase: string,
   encryptedEntries: EncryptedEntries[],
 ) {
   const { publicKey, privateKey } = await retrieveKeyPairs(passphrase);
 
-  let decryptedLogs = await decryptingAllLogs(
+  let { decrypted, notebooks } = await decryptingAllLogs(
     publicKey,
     privateKey,
     encryptedEntries,
   );
 
-  decryptedLogs.sort((a, b) => b.log.timestamp - a.log.timestamp);
+  decrypted.sort((a, b) => b.timestamp - a.timestamp);
 
-  let journals = sortIntoJournals(decryptedLogs);
+  let journals = sortIntoJournals(decrypted);
 
   return {
     decryptedEntries: journals,
+    notebooksFromDecrypted: notebooks,
   };
 }
 
+interface DecryptedLogs {
+  id: string;
+  title: string;
+  content: string;
+  timestamp: number;
+  notebook: string;
+}
+
 function sortIntoJournals(decryptedLogs: DecryptedLogs[]) {
-  let sortedJournals: SortedJournals = {};
+  let sortedJournals: Entries = {};
 
   decryptedLogs.forEach((entry) => {
-    const journalName = entry.log.journal;
-
-    if (!sortedJournals[journalName]) {
-      sortedJournals[journalName] = [];
-    }
-
-    sortedJournals[journalName].push({
-      id: entry.id,
-      log: entry.log,
-    });
+    sortedJournals[entry.id] = entry;
   });
 
   return sortedJournals;
@@ -85,6 +71,7 @@ async function decryptingAllLogs(
 ) {
   const length = logs.length;
   const decrypted: DecryptedLogs[] = [];
+  const notebooks: string[] = [];
 
   for (let i = 0; i < length; i++) {
     const decryptedTextBuf = sodium.crypto_box_seal_open(
@@ -96,16 +83,18 @@ async function decryptingAllLogs(
     const log: entry = unpack(decryptedTextBuf);
     decrypted.push({
       id: logs[i].id,
-      log: {
-        title: log[0],
-        content: log[1],
-        timestamp: log[2],
-        journal: log[3],
-      },
+      title: log[0],
+      content: log[1],
+      timestamp: log[2],
+      notebook: log[3],
     });
+
+    if (!notebooks.includes(log[3])) {
+      notebooks.push(log[3]);
+    }
   }
 
-  return decrypted;
+  return { decrypted, notebooks };
 }
 
 async function retrieveKeyPairs(passphrase: string) {

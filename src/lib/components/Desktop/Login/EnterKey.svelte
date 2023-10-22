@@ -3,8 +3,14 @@
   import Input from "./Input.svelte";
   import GoogleButton from "$lib/components/GoogleButton.svelte";
   import toast, { Toaster } from "svelte-french-toast";
-  import { stage, journalling } from "$lib/store";
-  import { createStore, values, setMany, clear, keys } from "idb-keyval";
+  import {
+    stage,
+    entries,
+    publicKeyStore,
+    currentNotebook,
+    notebooks,
+  } from "$lib/store";
+  import { createStore, values, setMany, clear } from "idb-keyval";
   import { pack } from "msgpackr";
   import { deserialiseDriveData, hashData } from "$lib/utils";
   import {
@@ -15,28 +21,8 @@
     revokeAccessToken,
   } from "$lib/googleDrive";
   import { generateKeyPairs, decrypt } from "$lib/libsodium";
-
-  export let createKey: boolean;
-
-  interface EncryptedEntries {
-    id: string;
-    entry: Uint8Array;
-    lastSyncTime: number;
-  }
-
-  interface entry {
-    id: string;
-    log: {
-      title: string;
-      content: string;
-      timestamp: number;
-      journal: string;
-    };
-  }
-
-  interface DecryptedEntries {
-    [journalName: string]: entry[];
-  }
+  import { goto } from "$app/navigation";
+  import type { EncryptedEntries } from "$lib/types";
 
   // need to implement fsm for this, as user can just press unlock diary multiple times
   async function unlockDiary() {
@@ -116,30 +102,27 @@
       encryptedEntries = await values(entriesStore);
     }
 
-    const { decryptedEntries } = await decrypt(
+    const { decryptedEntries, notebooksFromDecrypted } = await decrypt(
       passphrase.join(""),
       encryptedEntries
     );
 
     // now initialising the workspace
-    const arrObject = Object.entries(decryptedEntries);
+    const arrObject = Object.keys(decryptedEntries);
 
     if (arrObject.length !== 0) {
-      const ids: string[] = await keys(entriesStore);
-
-      $journalling.usedIds = new Set(ids);
-      $journalling.currentJournal = arrObject[0][0];
-      $journalling.journals = Object.keys(decryptedEntries);
-      $journalling.entries = decryptedEntries;
+      $currentNotebook = notebooksFromDecrypted[0];
+      $notebooks = notebooksFromDecrypted;
     } else {
-      $journalling.usedIds = new Set();
-      $journalling.currentJournal = "default";
-      $journalling.journals = ["default"];
-      $journalling.entries = { default: [] };
+      $currentNotebook = "default";
+      $notebooks = ["default"];
     }
 
-    $journalling.pubKey = pubKey;
+    $entries = decryptedEntries;
+    $publicKeyStore = pubKey;
     $stage = "Dashboard";
+
+    goto("/desktop/app");
   }
 
   function passphraseEmpty() {
@@ -377,7 +360,7 @@
     <button
       on:click={() => {
         revokeAccessToken();
-        createKey = true;
+        goto("/desktop/create-diary");
       }}
       class="btn btn-link lowercase text-secondary text-xl"
       >create a diary</button

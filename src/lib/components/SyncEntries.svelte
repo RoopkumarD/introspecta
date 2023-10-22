@@ -14,7 +14,7 @@
     serialiseDataForDrive,
   } from "$lib/utils";
   import { pack } from "msgpackr";
-  import { journalling, stage } from "$lib/store";
+  import { publicKeyStore, stage } from "$lib/store";
   import {
     revokeAccessToken,
     getModifiedTime,
@@ -26,6 +26,8 @@
   } from "$lib/googleDrive";
   import { CLIENT_ID } from "$lib/googleDrive";
   import GoogleButton from "$lib/components/GoogleButton.svelte";
+  import { page } from "$app/stores";
+  import { goto } from "$app/navigation";
 
   export let syncModalShow: boolean;
 
@@ -192,7 +194,7 @@
     const serialisedData = serialiseDataForDrive(data);
 
     const uploadDataResult = await uploadDataToDrive(
-      $journalling.pubKey,
+      $publicKeyStore,
       serialisedData
     );
 
@@ -565,7 +567,9 @@
         </p>
         <button
           on:click={() => {
+            let url = "/" + $page.route.id?.split("/")[1];
             $stage = "Login";
+            goto(url);
             return;
           }}
           class="btn-secondary btn"

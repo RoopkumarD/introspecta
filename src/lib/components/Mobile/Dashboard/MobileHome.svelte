@@ -1,23 +1,22 @@
 <script lang="ts">
-  import { journalling, blog } from "$lib/store";
+  import { entries, currentNotebook, notebooks } from "$lib/store";
   import { genShortUUID } from "$lib/utils";
   import Entry from "$lib/components/Mobile/Dashboard/Entry.svelte";
-  import SettingModal from "$lib/components/Dashboard/Desktop/SettingModal.svelte";
-  import SyncEntries from "$lib/components/Dashboard/Desktop/SyncEntries.svelte";
-  import { onMount } from "svelte";
+  import SettingModal from "$lib/components/SettingModal.svelte";
+  import SyncEntries from "$lib/components/SyncEntries.svelte";
   import toast, { Toaster } from "svelte-french-toast";
   import { goto } from "$app/navigation";
+  import ThemeChooser from "$lib/components/ThemeChooser.svelte";
+  import type { Entries, EntryType } from "$lib/types";
+  import { onMount } from "svelte";
+
+  let notebookEntries: EntryType[] = [];
 
   // create new log
   function getId() {
-    if ($journalling.usedIds === undefined) {
-      console.error("usedIds is undefined");
-      return null;
-    }
-
     let id = genShortUUID();
 
-    if ($journalling.usedIds.has(id)) {
+    if ($entries[id] !== undefined) {
       console.error("Used id was generated");
       return null;
     }
@@ -35,11 +34,6 @@
       return;
     }
 
-    $blog.id = id;
-    $blog.title = "";
-    $blog.content = "";
-    $blog.journal = $journalling.currentJournal;
-
     goto(`/mobile/app/${id}`);
   }
 
@@ -47,41 +41,25 @@
   let syncModalShow = false;
 
   function choosedJournal(journal: string) {
-    $journalling.currentJournal = journal;
+    $currentNotebook = journal;
+    notebookEntries = getEntriesList($entries);
     return;
   }
 
-  let themeSelected: boolean;
+  function getEntriesList(entries: Entries) {
+    let entriesArr = Object.values(entries);
 
-  function updateTheme() {
-    const one_year = 60 * 60 * 24 * 365;
+    let tmpArr: EntryType[] = entriesArr.filter(
+      (entry) => entry.notebook === $currentNotebook
+    );
 
-    if (themeSelected === false) {
-      localStorage.setItem("theme", "cupcake");
-      document.cookie = `theme=cupcake; max-age=${one_year}; path=/; SameSite=Lax`;
-      document.documentElement.setAttribute("data-theme", "cupcake");
-    } else if (themeSelected === true) {
-      localStorage.setItem("theme", "business");
-      document.cookie = `theme=business; max-age=${one_year}; path=/; SameSite=Lax`;
-      document.documentElement.setAttribute("data-theme", "business");
-    }
+    tmpArr.sort((a, b) => b.timestamp - a.timestamp);
+
+    return tmpArr;
   }
 
   onMount(() => {
-    const theme = localStorage.getItem("theme");
-
-    if (theme === null) {
-      themeSelected = true;
-      localStorage.setItem("theme", "cupcake");
-      const one_year = 60 * 60 * 24 * 365;
-      document.cookie = `theme=cupcake; max-age=${one_year}; path=/; SameSite=Lax`;
-    } else {
-      if (theme === "cupcake") {
-        themeSelected = true;
-      } else if (theme === "business") {
-        themeSelected = false;
-      }
-    }
+    notebookEntries = getEntriesList($entries);
   });
 </script>
 
@@ -114,50 +92,7 @@
         >
       </button>
       <button class="btn btn-circle btn-ghost !rounded-full">
-        <label class="swap swap-rotate">
-          <!-- this hidden checkbox controls the state -->
-          <input
-            type="checkbox"
-            on:change={updateTheme}
-            bind:checked={themeSelected}
-          />
-
-          <!-- sun icon -->
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-sun swap-on w-8 h-8"
-            ><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path
-              d="M12 20v2"
-            /><path d="m4.93 4.93 1.41 1.41" /><path
-              d="m17.66 17.66 1.41 1.41"
-            /><path d="M2 12h2" /><path d="M20 12h2" /><path
-              d="m6.34 17.66-1.41 1.41"
-            /><path d="m19.07 4.93-1.41 1.41" /></svg
-          >
-
-          <!-- moon icon -->
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="lucide lucide-moon swap-off h-8 w-8"
-            ><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg
-          >
-        </label>
+        <ThemeChooser />
       </button>
     </div>
     <button on:click={() => (syncModalShow = true)} class="btn btn-sm text-xl">
@@ -181,7 +116,7 @@
   </div>
   <details class="dropdown my-4 drop-shadow w-full">
     <summary class="btn btn-neutral w-full flex justify-between"
-      ><span>{$journalling.currentJournal}</span><span
+      ><span>{$currentNotebook}</span><span
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"
@@ -197,11 +132,11 @@
       ></summary
     >
     <ul class="p-2 shadow menu dropdown-content z-[2] bg-base-100 w-full">
-      {#each $journalling.journals as journal}
+      {#each $notebooks as notebook}
         <li class="p-2">
           <button
             class="rounded-none uppercase"
-            on:click={() => choosedJournal(journal)}>{journal}</button
+            on:click={() => choosedJournal(notebook)}>{notebook}</button
           >
         </li>
       {/each}
@@ -230,14 +165,12 @@
       <span class="font-medium">Create a log</span>
     </button>
 
-    {#each $journalling.entries[$journalling.currentJournal] as entry, index (entry.id)}
+    {#each notebookEntries as entry (entry.id)}
       <Entry
         id={entry.id}
-        {index}
-        title={entry.log.title}
-        content={entry.log.content}
-        timestamp={entry.log.timestamp}
-        journal={entry.log.journal}
+        title={entry.title}
+        content={entry.content}
+        timestamp={entry.timestamp}
       />
     {/each}
   </div>

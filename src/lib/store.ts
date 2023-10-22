@@ -1,47 +1,21 @@
+import type { Entries } from "$lib/types";
+
 import { writable } from "svelte/store";
 
 type Stage = "Login" | "Dashboard";
 
 const stage = writable<Stage>("Login");
+const entries = writable<Entries>({});
+const publicKeyStore = writable<string>("");
+const currentNotebook = writable<string>("");
+const notebooks = writable<string[]>([]);
+const desktopDrawer = writable<boolean>(false);
 
-interface entry {
-  id: string;
-  log: {
-    title: string;
-    content: string;
-    timestamp: number;
-    journal: string;
-  };
-}
-
-interface entries {
-  [journalName: string]: entry[];
-}
-
-interface Journalling {
-  pubKey: string;
-  currentJournal: string;
-  updateIndex: number;
-  journals: string[];
-  entries: entries;
-  usedIds: Set<string> | undefined;
-}
-
-const journalling = writable<Journalling>({
-  pubKey: "",
-  currentJournal: "",
-  updateIndex: -1,
-  journals: [],
-  entries: {},
-  usedIds: undefined,
-});
-
-const blog = writable({
-  id: "",
-  title: "",
-  content: "",
-  journal: "",
-  writeBlog: false,
-});
-
-export { stage, blog, journalling };
+export {
+  stage,
+  entries,
+  publicKeyStore,
+  currentNotebook,
+  notebooks,
+  desktopDrawer,
+};

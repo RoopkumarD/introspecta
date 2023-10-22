@@ -15,3 +15,15 @@ export type entry = [string, string, number, string];
 
 // [id, entry, lastSyncTime]
 export type serialisedEntries = [string, Uint8Array, number];
+
+export interface EntryType {
+  id: string;
+  title: string;
+  content: string;
+  timestamp: number;
+  notebook: string;
+}
+
+export interface Entries {
+  [idVal: string]: EntryType;
+}

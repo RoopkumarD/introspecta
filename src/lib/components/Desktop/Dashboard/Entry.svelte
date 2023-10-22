@@ -3,7 +3,7 @@
   export let id: string, title: string, content: string, timestamp: number;
 
   function choosedEntry() {
-    goto(`/mobile/app/${id}`);
+    goto(`/desktop/app/${id}`);
   }
 </script>
 

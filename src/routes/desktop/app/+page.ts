@@ -7,7 +7,7 @@ export const load: PageLoad = () => {
   let stageVal: "Login" | "Dashboard" = get(stage);
 
   if (stageVal === "Login") {
-    throw redirect(307, "/mobile");
+    throw redirect(307, "/desktop");
   }
 
   return;

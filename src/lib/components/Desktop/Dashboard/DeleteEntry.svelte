@@ -1,45 +1,32 @@
 <script lang="ts">
-  import { blog, journalling } from "$lib/store";
+  import { goto } from "$app/navigation";
   import { createStore, del } from "idb-keyval";
   import toast from "svelte-french-toast";
+  import { entries as entriesVal } from "$lib/store";
+
+  export let isNew: boolean, id: string;
 
   const entriesStore = createStore("introspecta", "entries");
 
   async function deleteLog() {
-    if ($journalling.usedIds === undefined) {
-      toast.error("UsedIds set is undefined, contact me");
-      return;
-    }
-
-    if ($journalling.updateIndex === -1) {
+    if (isNew === true) {
       // going back to home
-      $blog.id = "";
-      $blog.title = "";
-      $blog.content = "";
-
-      $blog.writeBlog = false;
+      goto("/desktop/app");
       return;
     }
 
     try {
-      await del($blog.id, entriesStore);
+      await del(id, entriesStore);
     } catch (err) {
       toast.error("Err while deleting entry from indexeddb");
       return;
     }
 
-    $journalling.entries[$blog.journal].splice($journalling.updateIndex, 1);
+    delete $entriesVal[id];
 
-    $journalling.usedIds.delete($blog.id);
+    $entriesVal = $entriesVal;
 
-    $journalling.updateIndex = -1;
-
-    // going back to home
-    $blog.id = "";
-    $blog.title = "";
-    $blog.content = "";
-
-    $blog.writeBlog = false;
+    goto("/desktop/app");
   }
 </script>
 
