@@ -4,7 +4,7 @@
   import Entry from "$lib/components/Mobile/Dashboard/Entry.svelte";
   import SettingModal from "$lib/components/SettingModal.svelte";
   import SyncEntries from "$lib/components/SyncEntries.svelte";
-  import toast, { Toaster } from "svelte-french-toast";
+  import toast from "svelte-french-toast";
   import { goto } from "$app/navigation";
   import ThemeChooser from "$lib/components/ThemeChooser.svelte";
   import type { Entries, EntryType } from "$lib/types";
@@ -62,8 +62,6 @@
     notebookEntries = getEntriesList($entries);
   });
 </script>
-
-<Toaster />
 
 <SettingModal bind:showModal />
 <SyncEntries bind:syncModalShow />

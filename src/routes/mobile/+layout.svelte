@@ -2,6 +2,7 @@
   import { API_KEY, DISCOVERY_DOC, CLIENT_ID } from "$lib/googleDrive";
   import { sodiumReady } from "$lib/libsodium";
   import { onMount } from "svelte";
+  import { Toaster } from "svelte-french-toast";
 
   function gapiLoaded() {
     window.gapi.load("client", initializeGapiClient);
@@ -25,6 +26,8 @@
 
   <meta name="google-signin-client_id" content={CLIENT_ID} />
 </svelte:head>
+
+<Toaster />
 
 <div class="block xl:hidden">
   <slot />

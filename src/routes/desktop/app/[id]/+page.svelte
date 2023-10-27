@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Toaster } from "svelte-french-toast";
   import DeleteEntry from "$lib/components/Desktop/Dashboard/DeleteEntry.svelte";
   import SaveEntry from "$lib/components/Desktop/Dashboard/SaveEntry.svelte";
   import { goto } from "$app/navigation";
@@ -59,8 +58,6 @@
     createDiaryWarning: false,
   };
 </script>
-
-<Toaster />
 
 <WarningModal {...wModal} />
 

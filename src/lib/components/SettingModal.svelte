@@ -1,6 +1,6 @@
 <script lang="ts">
   import { notebooks } from "$lib/store";
-  import toast, { Toaster } from "svelte-french-toast";
+  import toast from "svelte-french-toast";
   export let showModal: boolean;
 
   let dialog: HTMLDialogElement;
@@ -33,8 +33,6 @@
 
   $: if (dialog && showModal) dialog.showModal();
 </script>
-
-<Toaster />
 
 <dialog class="modal" bind:this={dialog} on:close={() => (showModal = false)}>
   <div class="modal-box h-96 overflow-y-auto">

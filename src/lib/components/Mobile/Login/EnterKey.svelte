@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import Input from "./Input.svelte";
   import GoogleButton from "$lib/components/GoogleButton.svelte";
-  import toast, { Toaster } from "svelte-french-toast";
+  import toast from "svelte-french-toast";
   import {
     stage,
     entries,
@@ -244,8 +244,6 @@
     }
   });
 </script>
-
-<Toaster />
 
 <dialog class="modal" bind:this={noPubKeyDialog}>
   <div class="modal-box flex flex-col items-center pt-3 pb-6 px-4">

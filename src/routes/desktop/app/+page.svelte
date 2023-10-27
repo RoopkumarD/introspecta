@@ -1,6 +1,6 @@
 <script lang="ts">
   import { genShortUUID } from "$lib/utils";
-  import toast, { Toaster } from "svelte-french-toast";
+  import toast from "svelte-french-toast";
   import SyncEntries from "$lib/components/SyncEntries.svelte";
   import { desktopDrawer } from "$lib/store";
   import { goto } from "$app/navigation";
@@ -33,8 +33,6 @@
     goto(`/desktop/app/${id}`);
   }
 </script>
-
-<Toaster />
 
 <SyncEntries bind:syncModalShow />
 
