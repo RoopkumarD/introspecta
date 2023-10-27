@@ -3,6 +3,7 @@
   import { createStore, del } from "idb-keyval";
   import toast from "svelte-french-toast";
   import { entries as entriesVal } from "$lib/store";
+  import WarningModal from "$lib/components/WarningModal.svelte";
 
   export let isNew: boolean,
     id: string,
@@ -15,7 +16,7 @@
   async function deleteLog(permissionGiven: boolean) {
     if (isNew === true) {
       if (permissionGiven === false && (title !== "" || content !== "")) {
-        dialog.showModal();
+        wModal.showModal = true;
         return;
       }
       // going back to home
@@ -24,7 +25,7 @@
     }
 
     if (permissionGiven === false) {
-      dialog.showModal();
+      wModal.showModal = true;
       return;
     }
 
@@ -40,41 +41,17 @@
     goto("/mobile/app");
   }
 
-  let dialog: HTMLDialogElement;
+  let wModal = {
+    showModal: false,
+    warningTitle: "Delete Entry",
+    warningString: `Are you sure you want to delete ${title} from ${notebook}`,
+    warningButtonString: "Delete It!",
+    warningAction: deleteLog,
+    createDiaryWarning: false,
+  };
 </script>
 
-<dialog class="modal" bind:this={dialog}>
-  <div class="modal-box leading-2">
-    <div
-      class="border-b-2 border-neutral pb-2 flex justify-between items-center"
-    >
-      <h3 class="font-semibold text-xl">Delete Entry</h3>
-      <button on:click={() => dialog.close()} class="btn btn-warning btn-sm"
-        >cancel</button
-      >
-    </div>
-    <p class="font-medium mt-6">
-      Are you sure you want to delete <span class="underline decoration-info"
-        >{title}</span
-      >
-      from
-      <span
-        class="underline
-        decoration-info">{notebook}</span
-      >
-    </p>
-    <p class="text-error text-sm mt-1">
-      *Note that this action is irreversible. You won't be able to recover this
-      entry later
-    </p>
-    <button
-      on:click={() => {
-        deleteLog(true);
-      }}
-      class="btn-error btn grow w-full font-bold mt-6">Delete It!</button
-    >
-  </div>
-</dialog>
+<WarningModal {...wModal} />
 
 <button
   on:click={() => {

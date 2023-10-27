@@ -5,6 +5,7 @@
   import { goto } from "$app/navigation";
   import { beforeNavigate } from "$app/navigation";
   import type { PageData } from "../$types";
+  import WarningModal from "$lib/components/WarningModal.svelte";
 
   export let data: PageData;
 
@@ -17,7 +18,7 @@
   function goToHome(permissionGiven: boolean) {
     if (isNew === true) {
       if (permissionGiven === false && (title !== "" || content !== "")) {
-        dialog.showModal();
+        wModal.showModal = true;
         return;
       }
     } else if (isNew === false) {
@@ -25,15 +26,13 @@
         permissionGiven === false &&
         (title !== data.title || content !== data.content)
       ) {
-        dialog.showModal();
+        wModal.showModal = true;
         return;
       }
     }
 
     goto("/mobile/app");
   }
-
-  let dialog: HTMLDialogElement;
 
   beforeNavigate((navigation) => {
     if (navigation.type === "popstate") {
@@ -42,41 +41,27 @@
         (isNew === false && (title !== data.title || content !== data.content))
       ) {
         navigation.cancel();
-        dialog.showModal();
+        wModal.showModal = true;
       }
     } else if (navigation.type === "leave") {
       navigation.cancel();
     }
   });
+
+  let wModal = {
+    showModal: false,
+    warningTitle: "Go Back",
+    warningString:
+      "Are you sure you want to go back home, cuz you haven't saved changes",
+    warningButtonString: "Go Back Home!",
+    warningAction: goToHome,
+    createDiaryWarning: false,
+  };
 </script>
 
 <Toaster />
 
-<dialog class="modal" bind:this={dialog}>
-  <div class="modal-box leading-2">
-    <div
-      class="border-b-2 border-neutral pb-2 flex justify-between items-center"
-    >
-      <h3 class="font-semibold text-xl">Go Back</h3>
-      <button on:click={() => dialog.close()} class="btn btn-warning btn-sm"
-        >cancel</button
-      >
-    </div>
-    <p class="font-medium mt-6">
-      Are you sure you want to go back home, cuz you haven't saved changes
-    </p>
-    <p class="text-error text-sm mt-1">
-      *Note that this action is irreversible. You won't be able to recover this
-      entry later
-    </p>
-    <button
-      on:click={() => {
-        goToHome(true);
-      }}
-      class="btn-error btn grow w-full font-bold mt-6">Go Back Home!</button
-    >
-  </div>
-</dialog>
+<WarningModal {...wModal} />
 
 <nav
   class="flex justify-between items-center border-b-[1px] border-base-300 py-3 px-4"
