@@ -11,18 +11,18 @@
   import { clear, createStore } from "idb-keyval";
   import { generateKeyPairs } from "$lib/libsodium";
   import { goto } from "$app/navigation";
+  import WarningModal from "$lib/components/WarningModal.svelte";
 
   const passphrase = getWords(5, 5, eff);
   let backed = false;
-  let deletePreviousEntries = false;
 
-  async function createKeyPairs() {
-    if (localStorage.getItem("pubKey") !== null && !deletePreviousEntries) {
-      dialog.showModal();
+  async function createKeyPairs(deletePreviousEntriesPermission: boolean) {
+    const lsPubKey = localStorage.getItem("pubKey");
+
+    if (deletePreviousEntriesPermission === false && lsPubKey !== null) {
+      wModal.showModal = true;
       return;
-    }
-
-    if (localStorage.getItem("pubKey") !== null && deletePreviousEntries) {
+    } else if (deletePreviousEntriesPermission === true && lsPubKey !== null) {
       // delete the previous stuff
       localStorage.clear();
       const entriesStore = createStore("introspecta", "entries");
@@ -39,28 +39,18 @@
     goto("/mobile/app");
   }
 
-  let dialog: HTMLDialogElement;
+  let wModal = {
+    showModal: false,
+    warningTitle: "Existing Data Found",
+    warningString:
+      "While creating a new diary, I discovered some data from a previously created diary stored in this browser. Are you sure you want to remove that diary? This app can only have one diary per browser. If you have synced the data to Google Drive storage, you can safely remove the previous diary from the browser, as you'll be able to restore it later if needed",
+    warningButtonString: "Remove It!",
+    warningAction: createKeyPairs,
+    createDiaryWarning: true,
+  };
 </script>
 
-<dialog class="modal" bind:this={dialog}>
-  <div class="modal-box leading-2">
-    <p>There are some old entries in this browser</p>
-    <p>If you want to delete them, then press continue</p>
-    <p>If not then press cancel</p>
-    <div class="flex gap-3 mt-4">
-      <button on:click={() => dialog.close()} class="btn-secondary btn grow"
-        >cancel</button
-      >
-      <button
-        on:click={() => {
-          deletePreviousEntries = true;
-          createKeyPairs();
-        }}
-        class="btn-accent btn grow">continue</button
-      >
-    </div>
-  </div>
-</dialog>
+<WarningModal {...wModal} />
 
 <main
   class="font-inter flex flex-col items-center mt-10 lg:mt-24
@@ -116,7 +106,9 @@
   </div>
   <button
     disabled={!backed}
-    on:click={createKeyPairs}
+    on:click={() => {
+      createKeyPairs(false);
+    }}
     class="btn btn-secondary btn-wide mb-3 text-xl">continue</button
   >
   <p
