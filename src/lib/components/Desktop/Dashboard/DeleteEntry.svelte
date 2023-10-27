@@ -4,14 +4,27 @@
   import toast from "svelte-french-toast";
   import { entries as entriesVal } from "$lib/store";
 
-  export let isNew: boolean, id: string;
+  export let isNew: boolean,
+    id: string,
+    title: string,
+    content: string,
+    notebook: string;
 
   const entriesStore = createStore("introspecta", "entries");
 
-  async function deleteLog() {
+  async function deleteLog(permissionGiven: boolean) {
     if (isNew === true) {
+      if (permissionGiven === false && (title !== "" || content !== "")) {
+        dialog.showModal();
+        return;
+      }
       // going back to home
       goto("/desktop/app");
+      return;
+    }
+
+    if (permissionGiven === false) {
+      dialog.showModal();
       return;
     }
 
@@ -28,13 +41,53 @@
 
     goto("/desktop/app");
   }
+
+  let dialog: HTMLDialogElement;
 </script>
+
+<dialog class="modal" bind:this={dialog}>
+  <div class="modal-box leading-2">
+    <div
+      class="border-b-2 border-neutral pb-2 flex justify-between items-center"
+    >
+      <h3 class="font-semibold text-xl">Delete Entry</h3>
+      <button on:click={() => dialog.close()} class="btn btn-warning btn-sm"
+        >cancel</button
+      >
+    </div>
+    <p class="font-medium mt-6">
+      Are you sure you want to delete <span class="underline decoration-info"
+        >{title}</span
+      >
+      from
+      <span
+        class="underline
+        decoration-info">{notebook}</span
+      >
+    </p>
+    <p class="text-error text-sm mt-1">
+      *Note that this action is irreversible. You won't be able to recover this
+      entry later
+    </p>
+    <button
+      on:click={() => {
+        deleteLog(true);
+      }}
+      class="btn-error btn grow w-full font-bold mt-6">Delete It!</button
+    >
+  </div>
+</dialog>
 
 <div
   class="tooltip tooltip-bottom tooltip-warning font-bold"
   data-tip="Delete Entry"
 >
-  <button on:click={deleteLog} class="btn btn-square btn-warning">
+  <button
+    on:click={() => {
+      deleteLog(false);
+    }}
+    class="btn btn-square btn-warning"
+  >
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width="24"
