@@ -44,7 +44,12 @@
         wModal.showModal = true;
       }
     } else if (navigation.type === "leave") {
-      navigation.cancel();
+      if (
+        (isNew === true && (title !== "" || content !== "")) ||
+        (isNew === false && (title !== data.title || content !== data.content))
+      ) {
+        navigation.cancel();
+      }
     }
   });
 
