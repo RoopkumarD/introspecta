@@ -88,9 +88,8 @@
             </p>
           </div>
         </div>
-
         <div class="collapse collapse-arrow join-item border border-base-300">
-          <input type="radio" name="my-accordion-4" checked="checked" />
+          <input type="radio" name="my-accordion-4" />
           <div class="collapse-title text-md font-medium">
             1. Why do you have to login each time you want to sync?
           </div>

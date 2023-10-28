@@ -183,6 +183,12 @@
   }
 
   async function getAccessToken() {
+    if (window.google === undefined) {
+      errMessage = "Google GSI is not loaded properly, internal problem";
+      modalState = changeModalState(modalState, "errWhileAccessingToken");
+      return;
+    }
+
     let clientInit = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,

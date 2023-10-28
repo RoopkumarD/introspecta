@@ -1,4 +1,4 @@
-import type { EncryptedEntries, serialisedEntries } from "$lib/types";
+import type { serialisedEntries } from "$lib/types";
 import { PUBLIC_API_KEY, PUBLIC_CLIENT_ID } from "$env/static/public";
 import { pack, unpack } from "msgpackr";
 

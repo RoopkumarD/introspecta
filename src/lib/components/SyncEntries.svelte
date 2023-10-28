@@ -86,6 +86,12 @@
   let clientInit: any;
 
   async function getAccessToken() {
+    if (window.google === undefined) {
+      errMessage = "Google GSI is not loaded properly, internal problem";
+      state = changeState(state, "err");
+      return;
+    }
+
     clientInit = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: "https://www.googleapis.com/auth/drive.file",
