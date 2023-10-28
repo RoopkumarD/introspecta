@@ -18,9 +18,7 @@ export function revokeAccessToken() {
   }
 }
 
-export async function getModifiedTime(
-  fileId: string,
-): Promise<string | "err" | "errResultFieldMissing"> {
+export async function getModifiedTime(fileId: string): Promise<string> {
   let response;
   try {
     response = await gapi.client.drive.files.get({
@@ -29,11 +27,11 @@ export async function getModifiedTime(
     });
   } catch (err) {
     console.error(err);
-    return "err";
+    throw new Error("err", { cause: err });
   }
 
   if (response.result.modifiedTime === undefined) {
-    return "errResultFieldMissing";
+    throw new Error("errResultFieldMissing");
   }
 
   return response.result.modifiedTime;
@@ -41,14 +39,12 @@ export async function getModifiedTime(
 
 // string -> fileId, 'err' -> err while getting, null -> no folder/file found
 
-export async function getFileMetadata(): Promise<
-  | "errListFile"
-  | null
-  | "responseFieldsUndefined"
-  | "entriesNotStored"
-  | "pubKeyNotStored"
-  | { id: string; modifiedTime: string; pubKey: string; entries: string }
-> {
+export async function getFileMetadata(): Promise<null | {
+  id: string;
+  modifiedTime: string;
+  pubKey: string;
+  entries: string;
+}> {
   let response;
   try {
     response = await window.gapi.client.drive.files.list({
@@ -57,7 +53,7 @@ export async function getFileMetadata(): Promise<
     });
   } catch (err) {
     console.error(err);
-    return "errListFile";
+    throw new Error("errListFile", { cause: err });
   }
 
   const files = response.result.files;
@@ -71,15 +67,15 @@ export async function getFileMetadata(): Promise<
     files[0].modifiedTime === undefined ||
     files[0].appProperties === undefined
   ) {
-    return "responseFieldsUndefined";
+    throw new Error("responseFieldsUndefined");
   }
 
   if (files[0].appProperties.pubKey === undefined) {
-    return "pubKeyNotStored";
+    throw new Error("pubKeyNotStored");
   }
 
   if (files[0].appProperties.entries === undefined) {
-    return "entriesNotStored";
+    throw new Error("entriesNotStored");
   }
 
   return {
@@ -92,15 +88,10 @@ export async function getFileMetadata(): Promise<
 
 export async function downloadFile(
   fileId: string,
-): Promise<
-  | serialisedEntries[]
-  | "errDownloadData"
-  | "errWhileUnpackingBuffer"
-  | "notAuthorized"
-> {
+): Promise<serialisedEntries[]> {
   let accessTokenObj = gapi.auth.getToken();
   if (accessTokenObj === null) {
-    return "notAuthorized";
+    throw new Error("notAuthorized");
   }
 
   let apiUrl =
@@ -116,7 +107,7 @@ export async function downloadFile(
     });
   } catch (err) {
     console.error(err);
-    return "errDownloadData";
+    throw new Error("errDownloadData", { cause: err });
   }
 
   const data = await response.arrayBuffer();
@@ -127,7 +118,7 @@ export async function downloadFile(
     dataArr = unpack(uint);
   } catch (err) {
     console.error(err);
-    return "errWhileUnpackingBuffer";
+    throw new Error("errWhileUnpackingBuffer", { cause: err });
   }
 
   return dataArr;
@@ -151,9 +142,7 @@ export async function deleteIntrospectaFile(
 export async function uploadDataToDrive(
   pubKey: string,
   dataArr: serialisedEntries[],
-): Promise<
-  "notAuthorized" | "errUpload" | { id: string; modifiedTime: string }
-> {
+): Promise<{ id: string; modifiedTime: string }> {
   const entries = dataArr.length.toString();
 
   const serialisedData = pack(dataArr);
@@ -172,7 +161,7 @@ export async function uploadDataToDrive(
 
   if (accessTokenObj === null) {
     console.error("user is not authorized");
-    return "notAuthorized";
+    throw new Error("notAuthorized");
   }
 
   const form = new FormData();
@@ -196,7 +185,7 @@ export async function uploadDataToDrive(
     );
   } catch (err) {
     console.error(err);
-    return "errUpload";
+    throw new Error("errUpload", { cause: err });
   }
 
   const data = await response.json();
@@ -206,7 +195,7 @@ export async function uploadDataToDrive(
 export async function updateDataOfDrive(
   fileId: string,
   dataArr: serialisedEntries[],
-): Promise<"notAuthorized" | "errUpload" | { modifiedTime: string }> {
+): Promise<{ modifiedTime: string }> {
   const entries = dataArr.length.toString();
 
   const serialisedData = pack(dataArr);
@@ -228,7 +217,7 @@ export async function updateDataOfDrive(
 
   if (accessTokenObj === null) {
     console.error("user is not authorized");
-    return "notAuthorized";
+    throw new Error("notAuthorized");
   }
 
   let response;
@@ -245,7 +234,7 @@ export async function updateDataOfDrive(
     );
   } catch (err) {
     console.error(err);
-    return "errUpload";
+    throw new Error("errUpload", { cause: err });
   }
 
   const data = await response.json();

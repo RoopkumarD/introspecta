@@ -28,6 +28,7 @@
   import GoogleButton from "$lib/components/GoogleButton.svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import type { serialisedEntries } from "$lib/types";
 
   export let syncModalShow: boolean;
 
@@ -121,27 +122,45 @@
       localStorage.getItem("dataHash") === null
     ) {
       // first checking if existing data is present on drive or not
-      const metaDatas = await getFileMetadata();
+      let metaDatas: {
+        id: string;
+        modifiedTime: string;
+        pubKey: string;
+        entries: string;
+      } | null = null;
+      try {
+        metaDatas = await getFileMetadata();
+      } catch (err) {
+        if (err instanceof Error) {
+          if (err.message === "errListFile") {
+            errMessage = "Err while finding introspecta file";
+            state = changeState(state, "errWhileSync");
+            return;
+          } else if (err.message === "responseFieldsUndefined") {
+            errMessage =
+              "Response from google drive didn't include important data, internal problem";
+            state = changeState(state, "errWhileSync");
+            return;
+          } else if (err.message === "entriesNotStored") {
+            errMessage =
+              "File data is modified by someone, please reach out to me";
+            state = changeState(state, "errWhileSync");
+            return;
+          } else if (err.message === "pubKeyNotStored") {
+            errMessage =
+              "File data doesn't contain pubKey, please reach out to me";
+            state = changeState(state, "errWhileSync");
+            return;
+          }
+        } else {
+          errMessage = "error catch is not Error object, internal problem";
+          state = changeState(state, "errWhileSync");
+          return;
+        }
+      }
 
       if (metaDatas === null) {
         newUpload(false);
-        return;
-      } else if (metaDatas === "errListFile") {
-        errMessage = "Err while finding introspecta file";
-        state = changeState(state, "errWhileSync");
-        return;
-      } else if (metaDatas === "responseFieldsUndefined") {
-        errMessage =
-          "Response from google drive didn't include important data, internal problem";
-        state = changeState(state, "errWhileSync");
-        return;
-      } else if (metaDatas === "entriesNotStored") {
-        errMessage = "File data is modified by someone, please reach out to me";
-        state = changeState(state, "errWhileSync");
-        return;
-      } else if (metaDatas === "pubKeyNotStored") {
-        errMessage = "File data doesn't contain pubKey, please reach out to me";
-        state = changeState(state, "errWhileSync");
         return;
       } else {
         entries = metaDatas.entries;
@@ -199,20 +218,32 @@
 
     const serialisedData = serialiseDataForDrive(data);
 
-    const uploadDataResult = await uploadDataToDrive(
-      $publicKeyStore,
-      serialisedData
-    );
-
-    if (uploadDataResult === "notAuthorized") {
-      errMessage =
-        "Please login so that drive allows me to add data to their storage";
-      state = changeState(state, "errWhileSync");
-      return;
-    } else if (uploadDataResult === "errUpload") {
-      errMessage = "Couldn't upload the data, internal problem";
-      state = changeState(state, "errWhileSync");
-      return;
+    let uploadDataResult: { id: string; modifiedTime: string } = {
+      id: "",
+      modifiedTime: "",
+    };
+    try {
+      uploadDataResult = await uploadDataToDrive(
+        $publicKeyStore,
+        serialisedData
+      );
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === "notAuthorized") {
+          errMessage =
+            "Please login so that drive allows me to add data to their storage";
+          state = changeState(state, "errWhileSync");
+          return;
+        } else if (err.message === "errUpload") {
+          errMessage = "Couldn't upload the data, internal problem";
+          state = changeState(state, "errWhileSync");
+          return;
+        }
+      } else {
+        errMessage = "error catch is not Error object, internal problem";
+        state = changeState(state, "errWhileSync");
+        return;
+      }
     }
 
     const dataHash = await hashData(pack(data));
@@ -261,14 +292,33 @@
     let fileIsModified: boolean = false;
 
     // first checking if there are updates or not
-    const driveModifiedTime = await getModifiedTime(fileId);
+    let driveModifiedTime: string = "";
+    try {
+      driveModifiedTime = await getModifiedTime(fileId);
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === "err") {
+          errMessage = "Got err while trying to retrieve modified Time of data";
+          state = changeState(state, "errWhileSync");
+          return;
+        } else if (err.message === "errResultFieldMissing") {
+          errMessage =
+            "modifiedTime field in result is missing, internal problem";
+          state = changeState(state, "errWhileSync");
+          return;
+        }
+      } else {
+        errMessage = "error catch is not Error object, internal problem";
+        state = changeState(state, "errWhileSync");
+        return;
+      }
+    }
 
-    if (driveModifiedTime === "err") {
-      errMessage = "Got err while trying to retrieve modified Time of data";
-      state = changeState(state, "errWhileSync");
-      return;
-    } else if (driveModifiedTime === "errResultFieldMissing") {
-      errMessage = "modifiedTime field in result is missing, internal problem";
+    const regexString = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+
+    if (!regexString.test(driveModifiedTime)) {
+      errMessage =
+        "modifiedTime from drive is not in expected format, internal problem";
       state = changeState(state, "errWhileSync");
       return;
     }
@@ -279,22 +329,31 @@
 
     // this takes care of syncing with changes of drive
     if (fileIsModified === true) {
-      let retrieveData = await downloadFile(fileId);
-
-      if (retrieveData === "errDownloadData") {
-        errMessage = "Got err while trying to retrieve data";
-        state = changeState(state, "errWhileSync");
-        return;
-      } else if (retrieveData === "errWhileUnpackingBuffer") {
-        errMessage =
-          "Wasn't able to deserialise the data got from drive, internal problem";
-        state = changeState(state, "errWhileSync");
-        return;
-      } else if (retrieveData === "notAuthorized") {
-        errMessage =
-          "Please login so that drive allows me to add data to their storage";
-        state = changeState(state, "errWhileSync");
-        return;
+      let retrieveData: serialisedEntries[] = [];
+      try {
+        retrieveData = await downloadFile(fileId);
+      } catch (err) {
+        if (err instanceof Error) {
+          if (err.message === "errDownloadData") {
+            errMessage = "Got err while trying to retrieve data";
+            state = changeState(state, "errWhileSync");
+            return;
+          } else if (err.message === "errWhileUnpackingBuffer") {
+            errMessage =
+              "Wasn't able to deserialise the data got from drive, internal problem";
+            state = changeState(state, "errWhileSync");
+            return;
+          } else if (err.message === "notAuthorized") {
+            errMessage =
+              "Please login so that drive allows me to add data to their storage";
+            state = changeState(state, "errWhileSync");
+            return;
+          }
+        } else {
+          errMessage = "error catch is not Error object, internal problem";
+          state = changeState(state, "errWhileSync");
+          return;
+        }
       }
 
       let deserialised = deserialiseDriveData(retrieveData);
@@ -403,47 +462,44 @@
     if (localHash !== dataHash) {
       // uploading to drive
       const serialised = serialiseDataForDrive(finalData);
-      const updateDataResult = await updateDataOfDrive(fileId, serialised);
 
-      if (updateDataResult === "notAuthorized") {
-        await Promise.all(
-          changeTimestamp.map((id) => {
-            return update(
-              id,
-              (val) => {
-                return {
-                  ...val,
-                  lastSyncTime: null,
-                };
-              },
-              entriesStore
+      let updateDataResult: { modifiedTime: string } = { modifiedTime: "" };
+      try {
+        updateDataResult = await updateDataOfDrive(fileId, serialised);
+      } catch (err) {
+        if (err instanceof Error) {
+          if (err.message === "notAuthorized" || err.message === "errUpload") {
+            await Promise.all(
+              changeTimestamp.map((id) => {
+                return update(
+                  id,
+                  (val) => {
+                    return {
+                      ...val,
+                      lastSyncTime: null,
+                    };
+                  },
+                  entriesStore
+                );
+              })
             );
-          })
-        );
 
-        errMessage =
-          "Please login so that drive allows me to add data to their storage";
-        state = changeState(state, "errWhileSync");
-        return;
-      } else if (updateDataResult === "errUpload") {
-        await Promise.all(
-          changeTimestamp.map((id) => {
-            return update(
-              id,
-              (val) => {
-                return {
-                  ...val,
-                  lastSyncTime: null,
-                };
-              },
-              entriesStore
-            );
-          })
-        );
+            if (err.message === "notAuthorized") {
+              errMessage =
+                "Please login so that drive allows me to add data to their storage";
+              state = changeState(state, "errWhileSync");
+            } else if (err.message === "errUpload") {
+              errMessage = "Couldn't upload the data, internal problem";
+              state = changeState(state, "errWhileSync");
+            }
 
-        errMessage = "Couldn't upload the data, internal problem";
-        state = changeState(state, "errWhileSync");
-        return;
+            return;
+          }
+        } else {
+          errMessage = "error catch is not Error object, internal problem";
+          state = changeState(state, "errWhileSync");
+          return;
+        }
       }
 
       // setting back stuff

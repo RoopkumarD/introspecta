@@ -22,7 +22,7 @@
   } from "$lib/googleDrive";
   import { generateKeyPairs, decrypt } from "$lib/libsodium";
   import { goto } from "$app/navigation";
-  import type { EncryptedEntries } from "$lib/types";
+  import type { EncryptedEntries, serialisedEntries } from "$lib/types";
 
   // need to implement fsm for this, as user can just press unlock diary multiple times
   async function unlockDiary() {
@@ -44,19 +44,27 @@
     if (state === "remotePubKey") {
       await toast.promise(
         new Promise(async (resolve, reject) => {
-          let data = await downloadFile(dataFileId);
-
-          if (data === "errDownloadData") {
-            reject("Err when downloading data from drive");
-            return;
-          } else if (data === "errWhileUnpackingBuffer") {
-            reject("Err when deserialising the data retrieved from drive");
-            return;
-          } else if (data === "notAuthorized") {
-            errMessage =
-              "Please login so that drive allows me to add data to their storage";
-            modalState = changeModalState(state, "errWhileSync");
-            return;
+          let data: serialisedEntries[] = [];
+          try {
+            data = await downloadFile(dataFileId);
+          } catch (err) {
+            if (err instanceof Error) {
+              if (err.message === "errDownloadData") {
+                reject("Err when downloading data from drive");
+                return;
+              } else if (err.message === "errWhileUnpackingBuffer") {
+                reject("Err when deserialising the data retrieved from drive");
+                return;
+              } else if (err.message === "notAuthorized") {
+                reject(
+                  "Please login so that drive allows me to add data to their storage"
+                );
+                return;
+              }
+            } else {
+              reject("error catch is not Error object, internal problem");
+              return;
+            }
           }
 
           const dataHash = await hashData(pack(data));
@@ -209,27 +217,45 @@
   }
 
   async function retrievePubKey() {
-    const metaDatas = await getFileMetadata();
+    let metaDatas: {
+      id: string;
+      modifiedTime: string;
+      pubKey: string;
+      entries: string;
+    } | null = null;
+    try {
+      metaDatas = await getFileMetadata();
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message === "errListFile") {
+          errMessage = "Err while finding introspecta file";
+          modalState = changeModalState(modalState, "errWhileSync");
+          return;
+        } else if (err.message === "responseFieldsUndefined") {
+          errMessage =
+            "Response from google drive didn't include important data, internal problem";
+          modalState = changeModalState(modalState, "errWhileSync");
+          return;
+        } else if (err.message === "entriesNotStored") {
+          errMessage =
+            "File data is modified by someone, please reach out to me";
+          modalState = changeModalState(modalState, "errWhileSync");
+          return;
+        } else if (err.message === "pubKeyNotStored") {
+          errMessage =
+            "File data doesn't contain pubKey, please reach out to me";
+          modalState = changeModalState(modalState, "errWhileSync");
+          return;
+        }
+      } else {
+        errMessage = "error catch is not Error object, internal problem";
+        modalState = changeModalState(state, "errWhileSync");
+        return;
+      }
+    }
 
     if (metaDatas === null) {
       errMessage = "introspecta file doesn't exists";
-      modalState = changeModalState(modalState, "errRetrieving");
-      return;
-    } else if (metaDatas === "errListFile") {
-      errMessage = "Err while finding introspecta file";
-      modalState = changeModalState(modalState, "errRetrieving");
-      return;
-    } else if (metaDatas === "responseFieldsUndefined") {
-      errMessage =
-        "Response from google drive didn't include important data, internal problem";
-      modalState = changeModalState(modalState, "errRetrieving");
-      return;
-    } else if (metaDatas === "entriesNotStored") {
-      errMessage = "File data is modified by someone, please reach out to me";
-      modalState = changeModalState(modalState, "errRetrieving");
-      return;
-    } else if (metaDatas === "pubKeyNotStored") {
-      errMessage = "File data doesn't contain pubKey, please reach out to me";
       modalState = changeModalState(modalState, "errRetrieving");
       return;
     }
