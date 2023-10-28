@@ -4,7 +4,7 @@
   import { goto } from "$app/navigation";
   import { desktopDrawer } from "$lib/store";
   import { beforeNavigate } from "$app/navigation";
-  import type { PageData } from "../$types";
+  import type { PageData } from "./$types";
   import WarningModal from "$lib/components/WarningModal.svelte";
 
   export let data: PageData;

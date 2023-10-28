@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import type { PageLoad } from "../$types";
+import type { PageLoad } from "./$types";
 import { entries, currentNotebook } from "$lib/store";
 
 export const load: PageLoad = ({ params }) => {

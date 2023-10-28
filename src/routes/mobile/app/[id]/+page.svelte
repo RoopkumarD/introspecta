@@ -3,7 +3,7 @@
   import SaveEntry from "$lib/components/Mobile/Dashboard/SaveEntry.svelte";
   import { goto } from "$app/navigation";
   import { beforeNavigate } from "$app/navigation";
-  import type { PageData } from "../$types";
+  import type { PageData } from "./$types";
   import WarningModal from "$lib/components/WarningModal.svelte";
 
   export let data: PageData;
