@@ -8,10 +8,7 @@
     <button class="btn btn-circle btn-ghost !rounded-full">
       <ThemeChooser />
     </button>
-    <a href="/desktop" class="btn btn-primary btn-outline hidden xl:inline-flex"
-      >Try App</a
-    >
-    <a href="/mobile" class="btn btn-primary btn-outline xl:hidden">Try App</a>
+    <a href="/unlock-diary" class="btn btn-primary btn-outline">Try App</a>
   </div>
 </div>
 <div class="bg-base-200">
