@@ -8,10 +8,7 @@
     <button class="btn btn-circle btn-ghost !rounded-full">
       <ThemeChooser />
     </button>
-    <a href="/desktop" class="btn btn-primary btn-outline hidden xl:inline-flex"
-      >Try App</a
-    >
-    <a href="/mobile" class="btn btn-primary btn-outline xl:hidden">Try App</a>
+    <a href="/unlock-diary" class="btn btn-primary btn-outline">Try App</a>
   </div>
 </div>
 <div class="hero min-h-screen bg-base-200">
@@ -26,10 +23,7 @@
           class="h-4 w-4 inline"
         /> Google Drive storage is used to backup/sync
       </p>
-      <a href="/desktop" class="btn btn-primary hidden xl:inline-flex"
-        >Get Started</a
-      >
-      <a href="/mobile" class="btn btn-primary xl:hidden">Get Started</a>
+      <a href="/unlock-diary" class="btn btn-primary">Get Started</a>
     </div>
   </div>
 </div>
