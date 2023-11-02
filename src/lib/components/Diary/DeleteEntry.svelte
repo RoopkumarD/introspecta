@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { createStore, del } from "idb-keyval";
   import toast from "svelte-french-toast";
-  import { entries as entriesVal } from "$lib/store";
+  import { entries as entriesVal, currentNotebook } from "$lib/store";
   import WarningModal from "$lib/components/WarningModal.svelte";
 
   export let isNew: boolean,
@@ -36,7 +36,7 @@
       return;
     }
 
-    delete $entriesVal[id];
+    delete $entriesVal[$currentNotebook][id];
 
     $entriesVal = $entriesVal;
 

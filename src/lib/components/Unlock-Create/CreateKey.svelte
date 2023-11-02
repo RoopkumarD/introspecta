@@ -1,13 +1,7 @@
 <script lang="ts">
   import { getWords } from "$lib/diceware/index";
   import eff from "$lib/diceware/eff";
-  import {
-    currentNotebook,
-    publicKeyStore,
-    entries,
-    stage,
-    notebooks,
-  } from "$lib/store";
+  import { currentNotebook, publicKeyStore, entries, stage } from "$lib/store";
   import { clear, createStore } from "idb-keyval";
   import { generateKeyPairs } from "$lib/libsodium";
   import { goto } from "$app/navigation";
@@ -33,8 +27,9 @@
     localStorage.setItem("pubKey", publicKey);
     $publicKeyStore = publicKey;
     $currentNotebook = "default";
-    $notebooks = ["default"];
-    $entries = {};
+    $entries = {
+      default: {},
+    };
     $stage = "Dashboard";
     goto("/diary");
   }

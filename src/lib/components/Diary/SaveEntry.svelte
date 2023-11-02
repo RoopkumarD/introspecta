@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { publicKeyStore, entries } from "$lib/store";
+  import { publicKeyStore, entries, currentNotebook } from "$lib/store";
   import { pack } from "msgpackr";
   import { update, set, createStore } from "idb-keyval";
   import toast from "svelte-french-toast";
@@ -56,13 +56,15 @@
       }
     }
 
-    $entries[id] = {
+    $entries[$currentNotebook][id] = {
       id: id,
       title: title,
       content: content,
       timestamp: timestamp,
       notebook: notebook,
     };
+
+    $entries = $entries;
     goto("/diary");
   }
 </script>

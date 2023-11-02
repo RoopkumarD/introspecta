@@ -2,13 +2,7 @@
   import { onMount } from "svelte";
   import Input from "./Input.svelte";
   import toast from "svelte-french-toast";
-  import {
-    stage,
-    entries,
-    publicKeyStore,
-    currentNotebook,
-    notebooks,
-  } from "$lib/store";
+  import { stage, entries, publicKeyStore, currentNotebook } from "$lib/store";
   import { createStore, values, setMany, clear } from "idb-keyval";
   import { pack } from "msgpackr";
   import { deserialiseDriveData, hashData } from "$lib/utils";
@@ -104,7 +98,7 @@
       encryptedEntries = await values(entriesStore);
     }
 
-    const { decryptedEntries, notebooksFromDecrypted } = await decrypt(
+    const { decryptedEntries } = await decrypt(
       passphrase.join(""),
       encryptedEntries
     );
@@ -113,14 +107,15 @@
     const arrObject = Object.keys(decryptedEntries);
 
     if (arrObject.length !== 0) {
-      $currentNotebook = notebooksFromDecrypted[0];
-      $notebooks = notebooksFromDecrypted;
+      $currentNotebook = arrObject[0];
+      $entries = decryptedEntries;
     } else {
       $currentNotebook = "default";
-      $notebooks = ["default"];
+      $entries = {
+        default: {},
+      };
     }
 
-    $entries = decryptedEntries;
     $publicKeyStore = pubKey;
     $stage = "Dashboard";
 

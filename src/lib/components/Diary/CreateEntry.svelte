@@ -2,13 +2,13 @@
   import toast from "svelte-french-toast";
   import { goto } from "$app/navigation";
   import { genShortUUID } from "$lib/utils";
-  import { entries } from "$lib/store";
+  import { entries, currentNotebook } from "$lib/store";
 
   // create new log
   function getId() {
     let id = genShortUUID();
 
-    if ($entries[id] !== undefined) {
+    if ($entries[$currentNotebook][id] !== undefined) {
       console.error("Used id was generated");
       return null;
     }

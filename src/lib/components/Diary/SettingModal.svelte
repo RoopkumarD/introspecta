@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { notebooks } from "$lib/store";
+  import { entries } from "$lib/store";
   import toast from "svelte-french-toast";
   export let showModal: boolean;
 
@@ -13,7 +13,7 @@
       return;
     }
 
-    $notebooks = [...$notebooks, newJournalName];
+    $entries[newJournalName] = {};
 
     newJournalName = "";
     return;
@@ -48,7 +48,7 @@
       </h1>
       <p class="underline mb-1">All journals:</p>
       <div class="flex flex-wrap gap-2">
-        {#each $notebooks as notebook}
+        {#each Object.keys($entries) as notebook}
           <p class={`${randomColor()} w-min p-1 rounded-md`}>{notebook}</p>
         {/each}
       </div>

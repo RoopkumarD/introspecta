@@ -25,5 +25,7 @@ export interface EntryType {
 }
 
 export interface Entries {
-  [idVal: string]: EntryType;
+  [notebookName: string]: {
+    [idVal: string]: EntryType;
+  };
 }

@@ -30,7 +30,7 @@ export async function decrypt(
 ) {
   const { publicKey, privateKey } = await retrieveKeyPairs(passphrase);
 
-  let { decrypted, notebooks } = await decryptingAllLogs(
+  let { decrypted } = await decryptingAllLogs(
     publicKey,
     privateKey,
     encryptedEntries,
@@ -38,11 +38,10 @@ export async function decrypt(
 
   decrypted.sort((a, b) => b.timestamp - a.timestamp);
 
-  let journals = sortIntoJournals(decrypted);
+  let notebooks = sortIntoNotebooks(decrypted);
 
   return {
-    decryptedEntries: journals,
-    notebooksFromDecrypted: notebooks,
+    decryptedEntries: notebooks,
   };
 }
 
@@ -54,14 +53,18 @@ interface DecryptedLogs {
   notebook: string;
 }
 
-function sortIntoJournals(decryptedLogs: DecryptedLogs[]) {
-  let sortedJournals: Entries = {};
+function sortIntoNotebooks(decryptedLogs: DecryptedLogs[]) {
+  let sortedNotebooks: Entries = {};
 
   decryptedLogs.forEach((entry) => {
-    sortedJournals[entry.id] = entry;
+    if (sortedNotebooks[entry.notebook] === undefined) {
+      sortedNotebooks[entry.notebook] = {};
+    }
+
+    sortedNotebooks[entry.notebook][entry.id] = entry;
   });
 
-  return sortedJournals;
+  return sortedNotebooks;
 }
 
 async function decryptingAllLogs(

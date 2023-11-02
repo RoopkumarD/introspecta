@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentNotebook, notebooks } from "$lib/store";
+  import { currentNotebook, entries } from "$lib/store";
 
   function choosedJournal(journal: string) {
     $currentNotebook = journal;
@@ -25,7 +25,7 @@
     ></summary
   >
   <ul class="p-2 shadow menu dropdown-content z-[2] bg-base-100 w-full">
-    {#each $notebooks as notebook}
+    {#each Object.keys($entries) as notebook}
       <li class="p-2">
         <button
           class="rounded-none uppercase"
