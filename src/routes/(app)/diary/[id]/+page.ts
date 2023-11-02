@@ -4,14 +4,15 @@ import type { PageLoad } from "./$types";
 import { entries, currentNotebook, stage } from "$lib/store";
 
 export const load: PageLoad = ({ params }) => {
-  const id = params.id;
-  const entriesVal = get(entries);
-  const notebook = get(currentNotebook);
   const stageVal = get(stage);
 
   if (stageVal === "Login") {
     throw redirect(307, "/unlock-diary");
   }
+
+  const id = params.id;
+  const entriesVal = get(entries);
+  const notebook = get(currentNotebook);
 
   if (entriesVal[notebook][id] === undefined) {
     return {
