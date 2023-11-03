@@ -543,12 +543,17 @@
   on:close={() => (syncModalShow = false)}
 >
   <div class="modal-box flex flex-col items-center gap-2">
-    {#if state === "login"}
-      <div class="flex justify-end w-full">
-        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
+    {#if state !== "syncing"}
+      <div
+        class="flex justify-between items-center border-b-2 border-neutral pb-2 mb-3 w-full"
+      >
+        <p class="font-semibold text-sm">Sync/Backup</p>
+        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-sm"
           >close</button
         >
       </div>
+    {/if}
+    {#if state === "login"}
       <p class="font-semibold bg-base-200 rounded-md p-4">
         Hey, before syncing, I would recommend that you go to the settings and
         read the FAQs under the backup section. There, I've answered questions
@@ -564,20 +569,8 @@
       >
     {/if}
     {#if state === "syncPrompt"}
-      <div class="flex justify-end w-full">
-        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
-          >close</button
-        >
-      </div>
-      <p class="font-medium bg-base-200 rounded-md p-4">
-        Great, you can now sync and store data in your account's drive storage.
-        If you've selected the wrong account, don't worry – you can change it by
-        clicking the <span class="font-bold">Change Google Drive Account</span>
-        button. Otherwise, you can proceed with
-        <span class="font-bold">Sync and Backup to Google Drive</span>.
-      </p>
-      <div class="flex flex-col">
-        <button on:click={syncTime} class="btn normal-case"
+      <div class="flex flex-col w-full">
+        <button on:click={syncTime} class="btn normal-case btn-block"
           ><img src="/driveLogo.png" alt="drive-logo" class="h-5 w-5" />Sync and
           Backup to Google Drive</button
         >
@@ -588,7 +581,7 @@
             state = changeState(state, "changeAccount");
             return;
           }}
-          class="btn-info btn">Change Google Drive Account</button
+          class="btn-info btn btn-block">Change Google Drive Account</button
         >
       </div>
     {/if}
@@ -601,11 +594,6 @@
       </div>
     {/if}
     {#if state === "errShow"}
-      <div class="flex justify-end w-full">
-        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
-          >close</button
-        >
-      </div>
       <div class="flex flex-col justify-center items-center">
         <strong class="mb-3">
           Err while syncing... Don't Worry just copy the err message and mail me
@@ -615,16 +603,11 @@
       </div>
     {/if}
     {#if state === "doneSyncWithUpdate"}
-      <div class="flex justify-end w-full">
-        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
-          >close</button
-        >
-      </div>
       <div class="flex flex-col justify-center items-center">
-        <strong> Done Syncing :) </strong>
-        <p>
-          I found some changes while syncing, please relogin with button below
-          to affect the changes
+        <p class="">
+          <strong> Done Syncing :) </strong>
+          I found some changes while syncing, please relogin with button below to
+          show the changes
         </p>
         <button
           on:click={() => {
@@ -632,33 +615,23 @@
             goto("/unlock-diary");
             return;
           }}
-          class="btn-secondary btn"
+          class="btn-secondary btn btn-block mt-3"
         >
           Relogin
         </button>
       </div>
     {/if}
     {#if state === "doneSync"}
-      <div class="flex justify-end w-full">
-        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
-          >close</button
-        >
-      </div>
       <div class="flex flex-col justify-center items-center">
         <strong> Done Syncing :) </strong>
       </div>
     {/if}
     {#if state === "deleteExistingData"}
-      <div class="flex justify-end w-full">
-        <button on:click={() => syncModal.close()} class="btn-ghost btn btn-xs"
-          >close</button
-        >
-      </div>
-      <p class="bg-base-200 font-semibold p-4 rounded-md">
+      <p class="font-semibold rounded-md text-error px-2 pb-2">
         I found {entries} entries in this google account drive. Are you sure, you
         want to overwrite all the data
       </p>
-      <div class="flex justify-evenly w-full">
+      <div class="w-full space-x-4">
         <button
           on:click={() => {
             revokeAccessToken();
