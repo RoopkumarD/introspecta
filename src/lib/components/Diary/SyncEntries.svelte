@@ -263,6 +263,8 @@
     return;
   }
 
+  // todo -> pass on fileId, dataHash and lastSyncTime from caller function as there
+  // we got these values
   async function existingDataSync() {
     const fileId = localStorage.getItem("fileId");
 
