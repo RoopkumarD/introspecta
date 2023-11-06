@@ -8,6 +8,20 @@ export const DISCOVERY_DOC =
   "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest";
 export const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
+export async function getAccessToken(callbackFn: (res: TokenResponse) => void) {
+  if (window.google === undefined) {
+    throw new Error("GSINotLoaded");
+  }
+
+  let clientInit = window.google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: "https://www.googleapis.com/auth/drive.file",
+    callback: callbackFn,
+  });
+
+  clientInit.requestAccessToken();
+}
+
 // sends a xhr request to revoke the access token
 // Thus would need time to execute this
 export function revokeAccessToken() {

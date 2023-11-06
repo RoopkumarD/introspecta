@@ -4,12 +4,14 @@ Thanks to this great person, that i don't have to do all these
 -->
 
 <script lang="ts">
-  export let getAccessToken: () => Promise<void>;
+  export let getAccessToken: () => Promise<void>,
+    disabled: boolean = false;
 </script>
 
 <button
   type="button"
   class="login-with-google-btn relative"
+  {disabled}
   on:click={getAccessToken}
 >
   <svg

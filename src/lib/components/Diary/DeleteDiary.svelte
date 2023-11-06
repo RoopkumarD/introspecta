@@ -74,29 +74,32 @@
     </p>
   {/if}
   {#if state === "givePass"}
-    <label class="label" for="notebookName">
-      <span class="label-text">Give me password to proceed</span>
-    </label>
-    <input
-      name="notebookName"
-      type="text"
-      bind:value={passwordString}
-      placeholder="Pass...."
-      class="input input-bordered w-full"
-    />
-    <div class="join space-x-6 inline-flex w-full mt-3">
-      <button
-        on:click={() => {
-          state = changeState(state, "cancel");
-          passwordString = "";
-        }}
-        class="btn btn-secondary !rounded-r-md join-item grow">Cancel</button
-      >
-      <button
-        on:click={proceedWithDelete}
-        class="btn btn-primary !rounded-l-md join-item grow">Proceed</button
-      >
-    </div>
+    <form>
+      <label class="label" for="notebookName">
+        <span class="label-text">Give me password to proceed</span>
+      </label>
+      <input
+        name="notebookName"
+        type="password"
+        bind:value={passwordString}
+        placeholder="Pass...."
+        class="input input-bordered w-full"
+        autocomplete="current-password"
+      />
+      <div class="join space-x-6 inline-flex w-full mt-3">
+        <button
+          on:click={() => {
+            state = changeState(state, "cancel");
+            passwordString = "";
+          }}
+          class="btn btn-secondary !rounded-r-md join-item grow">Cancel</button
+        >
+        <button
+          on:click={proceedWithDelete}
+          class="btn btn-primary !rounded-l-md join-item grow">Proceed</button
+        >
+      </div>
+    </form>
   {/if}
   {#if state === "loading"}
     <p>Deleting...</p>
