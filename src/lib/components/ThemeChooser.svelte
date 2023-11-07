@@ -1,19 +1,12 @@
 <script lang="ts">
-  let themeSelected: boolean;
-  /*
-  I can basically
-    let themeSelected = document.documentElement.getAttribute("data-theme") === "" ? false : true;
-  But let's keep this way, i don't see any point of adding more execution for this
-  As this component is referenced at many places, thus this will execute alot.
-  */
+  import { theme } from "$lib/store";
 
+  const one_year = 60 * 60 * 24 * 365;
   function updateTheme() {
-    const one_year = 60 * 60 * 24 * 365;
-
-    if (themeSelected === false) {
+    if ($theme === false) {
       document.cookie = `theme=cupcake; max-age=${one_year}; path=/; SameSite=Lax`;
       document.documentElement.setAttribute("data-theme", "cupcake");
-    } else if (themeSelected === true) {
+    } else if ($theme === true) {
       document.cookie = `theme=business; max-age=${one_year}; path=/; SameSite=Lax`;
       document.documentElement.setAttribute("data-theme", "business");
     }
@@ -23,11 +16,7 @@
 <button class="btn btn-circle btn-ghost !rounded-full">
   <label class="swap swap-rotate">
     <!-- this hidden checkbox controls the state -->
-    <input
-      type="checkbox"
-      on:change={updateTheme}
-      bind:checked={themeSelected}
-    />
+    <input type="checkbox" on:change={updateTheme} bind:checked={$theme} />
 
     <!-- sun icon -->
     <svg

@@ -4,15 +4,17 @@ import { derived, writable } from "svelte/store";
 
 type Stage = "Login" | "Dashboard";
 
-const stage = writable<Stage>("Login");
+export const stage = writable<Stage>("Login");
 
-const entries = writable<Entries>({});
+export const entries = writable<Entries>({});
 
-const publicKeyStore = writable<string>("");
-const currentNotebook = writable<string>("");
-const desktopDrawer = writable<boolean>(false);
+export const theme = writable<boolean>(false);
 
-const notebookEntries = derived(
+export const publicKeyStore = writable<string>("");
+export const currentNotebook = writable<string>("");
+export const desktopDrawer = writable<boolean>(false);
+
+export const notebookEntries = derived(
   [entries, currentNotebook],
   ([$entries, $currentNotebook]) => {
     return Object.values($entries[$currentNotebook]).sort(
@@ -20,12 +22,3 @@ const notebookEntries = derived(
     );
   },
 );
-
-export {
-  stage,
-  entries,
-  notebookEntries,
-  publicKeyStore,
-  currentNotebook,
-  desktopDrawer,
-};
