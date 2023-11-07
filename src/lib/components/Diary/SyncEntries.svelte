@@ -1,12 +1,5 @@
 <script lang="ts">
-  import {
-    createStore,
-    keys,
-    setMany,
-    update,
-    values,
-    delMany,
-  } from "idb-keyval";
+  import { createStore, setMany, values, delMany } from "idb-keyval";
   import type { EncryptedEntries } from "$lib/types";
   import {
     deserialiseDriveData,
@@ -173,27 +166,21 @@
   }
 
   async function newUpload(dataExists: boolean) {
-    const timestamp = new Date().getTime();
-    const keyIds = await keys(entriesStore);
-
     // lastSyncTime in entries are in unix timestamp
     // whereas lastTimeSynced is in data string format, as i didn't really converted it when got back from drive
 
+    const timestamp = new Date().getTime();
+    const idbVals = await values(entriesStore);
+
+    const updatedVals: [string, EncryptedEntries][] = idbVals.map((entry) => {
+      return [
+        entry.id,
+        { id: entry.id, entry: entry.entry, lastSyncTime: timestamp },
+      ];
+    });
+
     try {
-      await Promise.all(
-        keyIds.map((id) => {
-          return update(
-            id,
-            (val) => {
-              return {
-                ...val,
-                lastSyncTime: timestamp,
-              };
-            },
-            entriesStore
-          );
-        })
-      );
+      await setMany(updatedVals, entriesStore);
     } catch (err) {
       console.error(err);
       errMessage =
@@ -433,66 +420,53 @@
 
     // after sync done with drive data
     const timestamp = new Date().getTime();
+    const dataFromIDB: EncryptedEntries[] = await values(entriesStore);
 
-    const changeTimestamp: string[] = [];
+    let objForm: {
+      [idVal: string]: EncryptedEntries;
+    } = {};
+
+    dataFromIDB.forEach((entry) => {
+      objForm[entry.id] = entry;
+    });
+
+    const updatedTimestampEntries: [string, EncryptedEntries][] = [];
 
     localData.forEach((data: EncryptedEntries) => {
       if (data.lastSyncTime === null) {
-        changeTimestamp.push(data.id);
+        objForm[data.id] = {
+          ...objForm[data.id],
+          lastSyncTime: timestamp,
+        };
+
+        updatedTimestampEntries.push([
+          data.id,
+          { id: data.id, entry: data.entry, lastSyncTime: timestamp },
+        ]);
       }
     });
 
-    await Promise.all(
-      changeTimestamp.map((id) => {
-        return update(
-          id,
-          (val) => {
-            return {
-              ...val,
-              lastSyncTime: timestamp,
-            };
-          },
-          entriesStore
-        );
-      })
-    );
-
-    const finalData = await values(entriesStore);
+    const uploadData = Object.values(objForm);
 
     // thus also accounting of case where a entry is deleted
     if (localHash !== dataHash) {
       // uploading to drive
-      const serialised = serialiseDataForDrive(finalData);
+      const serialised = serialiseDataForDrive(uploadData);
 
       let updateDataResult: { modifiedTime: string } = { modifiedTime: "" };
       try {
         updateDataResult = await updateDataOfDrive(fileId, serialised);
       } catch (err) {
         if (err instanceof Error) {
-          if (err.message === "notAuthorized" || err.message === "errUpload") {
-            await Promise.all(
-              changeTimestamp.map((id) => {
-                return update(
-                  id,
-                  (val) => {
-                    return {
-                      ...val,
-                      lastSyncTime: null,
-                    };
-                  },
-                  entriesStore
-                );
-              })
-            );
+          if (err.message === "notAuthorized") {
+            errMessage =
+              "Please login so that drive allows me to add data to their storage";
+            state = changeState(state, "errWhileSync");
 
-            if (err.message === "notAuthorized") {
-              errMessage =
-                "Please login so that drive allows me to add data to their storage";
-              state = changeState(state, "errWhileSync");
-            } else if (err.message === "errUpload") {
-              errMessage = "Couldn't upload the data, internal problem";
-              state = changeState(state, "errWhileSync");
-            }
+            return;
+          } else if (err.message === "errUpload") {
+            errMessage = "Couldn't upload the data, internal problem";
+            state = changeState(state, "errWhileSync");
 
             return;
           }
@@ -507,7 +481,15 @@
       localStorage.setItem("lastSyncTime", updateDataResult.modifiedTime);
     }
 
-    const finalDataHash = await hashData(pack(finalData));
+    try {
+      await setMany(updatedTimestampEntries, entriesStore);
+    } catch (err) {
+      errMessage = "Err adding timestamp to synced data";
+      state = changeState(state, "errWhileSync");
+      return;
+    }
+
+    const finalDataHash = await hashData(pack(uploadData));
 
     if (finalDataHash === null) {
       errMessage = "Err hashing data";
