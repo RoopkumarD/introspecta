@@ -81,10 +81,12 @@
           {#each Object.keys($entries) as notebook}
             <div class="flex justify-between items-center">
               <p>{notebook}</p>
-              <button
-                on:click={() => choosedJournal(notebook)}
-                class="btn btn-xs">choose</button
-              >
+              <input
+                type="checkbox"
+                on:change={() => choosedJournal(notebook)}
+                checked={notebook === $currentNotebook}
+                class="checkbox checkbox-sm"
+              />
             </div>
           {/each}
         </div>

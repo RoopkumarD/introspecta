@@ -73,7 +73,7 @@
     on:click={() => ($desktopDrawer = !$desktopDrawer)}
     class="btn btn-square btn-ghost ml-4 hidden xl:block"
   >
-    Menu
+    {$desktopDrawer === true ? "Hide Menu" : "Show Menu"}
   </button>
 
   <button

@@ -12,7 +12,7 @@ export const theme = writable<boolean>(false);
 
 export const publicKeyStore = writable<string>("");
 export const currentNotebook = writable<string>("");
-export const desktopDrawer = writable<boolean>(false);
+export const desktopDrawer = writable<boolean>(true);
 
 export const notebookEntries = derived(
   [entries, currentNotebook],

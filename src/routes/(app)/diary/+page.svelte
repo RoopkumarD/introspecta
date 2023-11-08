@@ -57,7 +57,7 @@
       on:click={() => ($desktopDrawer = !$desktopDrawer)}
       class="btn btn-ghost btn-square ml-4"
     >
-      menu
+      {$desktopDrawer === true ? "Hide Menu" : "Show Menu"}
     </button>
     <p id="date" class="text-xl ml-14 mt-1">
       {new Date().toDateString()}

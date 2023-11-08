@@ -12,6 +12,28 @@
   let password: string = "";
   let confirmPassword: string = "";
 
+  let showPass: boolean = false;
+  let inputPassElem: HTMLInputElement;
+  let inputConfElem: HTMLInputElement;
+
+  $: {
+    changeVisibility(showPass);
+  }
+
+  function changeVisibility(showPass: boolean) {
+    if (inputPassElem === undefined || inputConfElem === undefined) {
+      return;
+    }
+
+    if (showPass === false) {
+      inputPassElem.setAttribute("type", "password");
+      inputConfElem.setAttribute("type", "password");
+    } else {
+      inputPassElem.setAttribute("type", "text");
+      inputConfElem.setAttribute("type", "text");
+    }
+  }
+
   async function createKeyPairs() {
     if (password === "") {
       toast.error("Password can't be empty");
@@ -64,6 +86,7 @@
         name="createPass"
         class="px-4 py-2 peer mb-4 bg-transparent text-md md:text-xl border-[1px] border-base-300 rounded-lg w-80 lg:w-96"
         bind:value={password}
+        bind:this={inputPassElem}
         type="password"
         placeholder="pass..."
         autocomplete="new-password"
@@ -98,9 +121,16 @@
           password !== confirmPassword ? "border-accent" : "border-base-300"
         } rounded-lg w-80 lg:w-96`}
         bind:value={confirmPassword}
+        bind:this={inputConfElem}
         type="password"
         placeholder="pass..."
       />
+    </div>
+    <div class="form-control flex justify-between w-64 mt-2">
+      <label class="label cursor-pointer">
+        <span class="label-text">Show Password</span>
+        <input type="checkbox" class="toggle" bind:checked={showPass} />
+      </label>
     </div>
   </form>
   <p class="text-error font-medium w-80 px-2 lg:w-96 mb-8">
