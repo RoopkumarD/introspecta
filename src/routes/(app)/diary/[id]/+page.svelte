@@ -5,7 +5,7 @@
   import { desktopDrawer } from "$lib/store";
   import { beforeNavigate } from "$app/navigation";
   import type { PageData } from "./$types";
-  import WarningModal from "$lib/components/WarningModal.svelte";
+  import { openWarningModal } from "$lib/warningStore";
 
   export let data: PageData;
 
@@ -15,10 +15,18 @@
   let notebook: string = data.notebook;
   let isNew: boolean = data.isNew;
 
+  const wModal = {
+    title: "Go Back",
+    content:
+      "Are you sure you want to go back home, cuz you haven't saved changes",
+    buttonString: "Go Back Home!",
+    action: goToHome,
+  };
+
   function goToHome(permissionGiven: boolean) {
     if (isNew === true) {
       if (permissionGiven === false && (title !== "" || content !== "")) {
-        wModal.showModal = true;
+        openWarningModal(wModal);
         return;
       }
     } else if (isNew === false) {
@@ -26,7 +34,7 @@
         permissionGiven === false &&
         (title !== data.title || content !== data.content)
       ) {
-        wModal.showModal = true;
+        openWarningModal(wModal);
         return;
       }
     }
@@ -35,36 +43,27 @@
   }
 
   beforeNavigate((navigation) => {
-    if (navigation.type === "popstate") {
-      if (
-        (isNew === true && (title !== "" || content !== "")) ||
-        (isNew === false && (title !== data.title || content !== data.content))
-      ) {
+    if (
+      (isNew === true && (title !== "" || content !== "")) ||
+      (isNew === false && (title !== data.title || content !== data.content))
+    ) {
+      if (navigation.type === "popstate") {
         navigation.cancel();
-        wModal.showModal = true;
-      }
-    } else if (navigation.type === "leave") {
-      if (
-        (isNew === true && (title !== "" || content !== "")) ||
-        (isNew === false && (title !== data.title || content !== data.content))
-      ) {
+        openWarningModal(wModal);
+      } else if (navigation.type === "leave") {
         navigation.cancel();
+      } else if (
+        navigation.type === "link" &&
+        navigation.from?.route.id === "/(app)/diary/[id]"
+      ) {
+        if (navigation.from.route.id !== data.id) {
+          navigation.cancel();
+          openWarningModal(wModal);
+        }
       }
     }
   });
-
-  let wModal = {
-    showModal: false,
-    warningTitle: "Go Back",
-    warningString:
-      "Are you sure you want to go back home, cuz you haven't saved changes",
-    warningButtonString: "Go Back Home!",
-    warningAction: goToHome,
-    createDiaryWarning: false,
-  };
 </script>
-
-<WarningModal {...wModal} />
 
 <nav
   class="flex items-center justify-between border-b-[1px] border-base-300 py-3 xl:py-2 px-4"

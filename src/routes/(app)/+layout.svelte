@@ -3,6 +3,7 @@
   import { sodiumReady } from "$lib/libsodium";
   import { onMount } from "svelte";
   import { Toaster } from "svelte-french-toast";
+  import WarningModal from "$lib/components/WarningModal.svelte";
 
   function gapiLoaded() {
     window.gapi.load("client", initializeGapiClient);
@@ -28,5 +29,6 @@
 </svelte:head>
 
 <Toaster />
+<WarningModal />
 
 <slot />

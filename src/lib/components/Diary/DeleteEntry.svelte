@@ -3,7 +3,7 @@
   import { createStore, del } from "idb-keyval";
   import toast from "svelte-french-toast";
   import { entries as entriesVal, currentNotebook } from "$lib/store";
-  import WarningModal from "$lib/components/WarningModal.svelte";
+  import { openWarningModal } from "$lib/warningStore";
 
   export let isNew: boolean,
     id: string,
@@ -11,12 +11,19 @@
     content: string,
     notebook: string;
 
+  let wModal = {
+    title: "Delete Entry",
+    content: `Are you sure you want to delete ${title} from ${notebook}`,
+    buttonString: "Delete It!",
+    action: deleteLog,
+  };
+
   const entriesStore = createStore("introspecta", "entries");
 
   async function deleteLog(permissionGiven: boolean) {
     if (isNew === true) {
       if (permissionGiven === false && (title !== "" || content !== "")) {
-        wModal.showModal = true;
+        openWarningModal(wModal);
         return;
       }
       // going back to home
@@ -25,7 +32,7 @@
     }
 
     if (permissionGiven === false) {
-      wModal.showModal = true;
+      openWarningModal(wModal);
       return;
     }
 
@@ -42,18 +49,7 @@
 
     goto("/diary");
   }
-
-  let wModal = {
-    showModal: false,
-    warningTitle: "Delete Entry",
-    warningString: `Are you sure you want to delete ${title} from ${notebook}`,
-    warningButtonString: "Delete It!",
-    warningAction: deleteLog,
-    createDiaryWarning: false,
-  };
 </script>
-
-<WarningModal {...wModal} />
 
 <div
   class="tooltip tooltip-bottom tooltip-warning font-bold hidden xl:block"
