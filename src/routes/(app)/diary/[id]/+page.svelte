@@ -71,9 +71,44 @@
   <button
     id="menu"
     on:click={() => ($desktopDrawer = !$desktopDrawer)}
-    class="btn btn-square btn-ghost ml-4 hidden xl:block"
+    class="btn btn-ghost btn-square ml-4"
   >
-    {$desktopDrawer === true ? "Hide Menu" : "Show Menu"}
+    {#if $desktopDrawer === true}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-panel-right-open"
+        ><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><line
+          x1="15"
+          x2="15"
+          y1="3"
+          y2="21"
+        /><path d="m10 15-3-3 3-3" /></svg
+      >
+    {:else}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="lucide lucide-panel-left-open"
+        ><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><path
+          d="M9 3v18"
+        /><path d="m14 9 3 3-3 3" /></svg
+      >
+    {/if}
   </button>
 
   <button
