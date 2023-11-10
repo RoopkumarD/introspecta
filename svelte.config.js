@@ -37,6 +37,7 @@ const config = {
           "https://content.googleapis.com/",
           "https://accounts.google.com/gsi/",
         ],
+        "img-src": ["self", "https://pbs.twimg.com/profile_images/"],
       },
     },
   },

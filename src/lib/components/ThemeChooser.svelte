@@ -13,7 +13,7 @@
   }
 </script>
 
-<button class="btn btn-circle btn-ghost !rounded-full">
+<button class="btn btn-circle btn-ghost">
   <label class="swap swap-rotate">
     <!-- this hidden checkbox controls the state -->
     <input type="checkbox" on:change={updateTheme} bind:checked={$theme} />
