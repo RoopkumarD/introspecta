@@ -71,7 +71,7 @@
   <button
     id="menu"
     on:click={() => ($desktopDrawer = !$desktopDrawer)}
-    class="btn btn-ghost btn-square ml-4"
+    class="btn btn-ghost btn-square ml-4 hidden xl:flex"
   >
     {#if $desktopDrawer === true}
       <svg
