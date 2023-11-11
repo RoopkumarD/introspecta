@@ -4,7 +4,11 @@
 
 <div class="navbar bg-base-100 px-5 xl:px-8">
   <div class="navbar-start">
-    <a href="/" class="text-lg font-abrilFatFace">introspecta</a>
+    <a href="/" class="text-lg font-abrilFatFace"
+      >introspecta<span class="bg-primary ml-2 p-1 rounded-md text-sm"
+        >beta</span
+      ></a
+    >
   </div>
   <div class="flex items-center gap-4 navbar-end">
     <div class="hidden xl:block">

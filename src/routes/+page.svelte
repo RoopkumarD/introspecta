@@ -32,9 +32,9 @@
       class="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-14"
     >
       <img
-        class="border-[1px] border-base-200 rounded-md w-full h-auto lg:h-44 lg:w-auto drop-shadow-xl"
-        alt="create-key"
-        src="/create-key.png"
+        class="border-[1px] border-base-200 italic rounded-md w-full h-auto lg:h-44 lg:w-auto drop-shadow-xl"
+        alt="create key screen"
+        src="/create-key.webp"
       />
       <div id="info">
         <h3 class="font-bold">Create Diary with Password</h3>
@@ -50,9 +50,9 @@
       class="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-14"
     >
       <img
-        class="border-[1px] border-base-200 rounded-md w-full h-auto lg:h-44 lg:w-auto drop-shadow-xl"
+        class="border-[1px] border-base-200 italic rounded-md w-full h-auto lg:h-44 lg:w-auto drop-shadow-xl"
         alt="create-entry"
-        src="/create-entry.png"
+        src="/create-entry.webp"
       />
       <div id="info">
         <h3 class="font-bold">Create Entries</h3>
@@ -69,9 +69,9 @@
       class="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-14"
     >
       <img
-        class="border-[1px] border-base-200 rounded-md w-full h-auto lg:h-44 lg:w-auto drop-shadow-xl"
+        class="border-[1px] border-base-200 italic rounded-md w-full h-auto lg:h-44 lg:w-auto drop-shadow-xl"
         alt="sync-entry"
-        src="/sync.png"
+        src="/sync.webp"
       />
       <div id="info">
         <h3 class="font-bold">Sync with your Drive Storage</h3>
