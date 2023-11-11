@@ -19,7 +19,7 @@ Introspecta is a web diary app that prioritizes privacy and data ownership, allo
 
 - **Backup and Sync**: To prevent data loss, I offer an option to back up and sync your entries with your Google Drive account.
 
-![Creating Diary](https://github.com/RoopkumarD/introspecta/assets/120183778/07c8359f-3efb-4992-af09-7fa33bd4945f)
+![Creating Diary](https://github.com/RoopkumarD/introspecta/assets/120183778/dd85cbaa-84ce-4193-b566-cbb038d3e596)
 
 ## Why I Consider This App a Tool
 
