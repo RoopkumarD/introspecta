@@ -74,10 +74,11 @@
         src="/sync.webp"
       />
       <div id="info">
-        <h3 class="font-bold">Sync with your Drive Storage</h3>
+        <h3 class="font-bold">Sync with your Google Drive Storage</h3>
         <p class="">
-          Use the sync feature to access your entries on different devices or
-          browsers. It stores all encrypted entries in your Google Drive account
+          This is optional unless you want backups or cross-device access. I
+          chose this because I don't want your data to be stored in my database,
+          and I believe most people have a Google account
         </p>
       </div>
     </div>
