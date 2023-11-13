@@ -1,5 +1,9 @@
-<div class="relative py-3 sm:max-w-xl sm:mx-auto">
-  <div class="rounded bg-gray-100 border border-gray-300 px-6 py-4 my-4 w-full">
+<script lang="ts">
+  export let aTag: HTMLAnchorElement;
+</script>
+
+<div class="relative">
+  <div class="rounded bg-gray-100 border border-gray-300 px-6 py-4 w-full">
     <div class="flex items-center">
       <a
         class="flex h-12 w-12 mr-3"
@@ -67,6 +71,7 @@
     </a>
     <div class="flex text-gray-700 mt-2">
       <a
+        bind:this={aTag}
         class="flex items-center mr-4 text-gray-500 hover:text-blue-600 transition hover:underline"
         href="https://x.com/Roopkd_/status/1716456929164411113"
         target="_blank"

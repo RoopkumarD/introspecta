@@ -6,6 +6,7 @@ export default {
       fontFamily: {
         inter: ["Inter", "sans-serif"],
         abrilFatFace: ["Abril Fatface", "cursive"],
+        jetBrainMono: ["JetBrains Mono", "monospace"],
       },
     },
   },

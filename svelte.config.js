@@ -24,7 +24,7 @@ const config = {
           "https://apis.google.com",
         ],
         "font-src": ["self", "fonts.gstatic.com"],
-        "style-src": ["self", "fonts.googleapis.com"],
+        "style-src": ["self", "fonts.googleapis.com", "unsafe-inline"],
         // connect-src to do xmlHttprequest
         "connect-src": [
           "self",
