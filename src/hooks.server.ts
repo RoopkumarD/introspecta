@@ -7,7 +7,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (!theme || !themes.includes(theme)) {
     const response = await resolve(event, {
       transformPageChunk: ({ html }) => {
-        return html.replace('data-theme=""', `data-theme="cupcake"`);
+        return html.replace('data-theme=""', `data-theme="business"`);
       },
     });
     response.headers.set("x-frame-options", "DENY");
