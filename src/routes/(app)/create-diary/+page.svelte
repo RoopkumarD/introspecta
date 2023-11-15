@@ -88,7 +88,7 @@
         bind:value={password}
         bind:this={inputPassElem}
         type="password"
-        placeholder="pass..."
+        placeholder="password"
         autocomplete="new-password"
       />
       <div
