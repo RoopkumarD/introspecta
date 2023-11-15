@@ -88,7 +88,7 @@
         bind:value={password}
         bind:this={inputElem}
         type="password"
-        placeholder="pass..."
+        placeholder="password"
         autocomplete="current-password"
       />
       <div class="form-control flex justify-between w-64 mt-2">
