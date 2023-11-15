@@ -123,7 +123,7 @@
         bind:value={confirmPassword}
         bind:this={inputConfElem}
         type="password"
-        placeholder="pass..."
+        placeholder="password"
       />
     </div>
     <div class="form-control flex justify-between w-64 mt-2">
