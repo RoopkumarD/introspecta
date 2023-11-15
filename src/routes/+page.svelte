@@ -9,30 +9,39 @@
   let aTag: HTMLAnchorElement;
   let commentTag: HTMLSpanElement;
 
-  onMount(async () => {
-    const { LeaderLine } = await import("$lib/leader");
-    new LeaderLine(first, second, {
-      color: "#7d919b",
-      dash: { animation: true },
-      size: 2,
-      endPlugSize: 1,
+  onMount(() => {
+    let line1, line2, line3;
+
+    import("$lib/leader").then(({ LeaderLine }) => {
+      line1 = new LeaderLine(first, second, {
+        color: "#7d919b",
+        dash: { animation: true },
+        size: 2,
+        endPlugSize: 1,
+      });
+
+      line2 = new LeaderLine(second, third, {
+        color: "#7d919b",
+        dash: { animation: true },
+        size: 2,
+        endPlugSize: 1,
+      });
+
+      line3 = new LeaderLine(commentTag, aTag, {
+        color: "#eb6b47",
+        dash: { animation: true },
+        startSocket: "bottom",
+        endSocket: "top",
+        size: 2,
+        endPlugSize: 1,
+      });
     });
 
-    new LeaderLine(second, third, {
-      color: "#7d919b",
-      dash: { animation: true },
-      size: 2,
-      endPlugSize: 1,
-    });
-
-    new LeaderLine(commentTag, aTag, {
-      color: "#eb6b47",
-      dash: { animation: true },
-      startSocket: "bottom",
-      endSocket: "top",
-      size: 2,
-      endPlugSize: 1,
-    });
+    return () => {
+      line1.remove();
+      line2.remove();
+      line3.remove();
+    };
   });
 </script>
 
