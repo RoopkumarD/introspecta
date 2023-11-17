@@ -4,7 +4,7 @@
 </div>
 
 <div align="center">
-  <a href="https://introspecta.vercel.app/desktop">Try Introspecta</a>
+  <a href="https://introspecta.vercel.app">Try Introspecta</a>
 </div>
 
 ---
