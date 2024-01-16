@@ -12,8 +12,8 @@ dependencies:
     specifier: ^0.7.13
     version: 0.7.13
   msgpackr:
-    specifier: ^1.9.9
-    version: 1.9.9
+    specifier: ^1.10.1
+    version: 1.10.1
 
 devDependencies:
   '@sveltejs/adapter-vercel':
@@ -338,8 +338,8 @@ packages:
       '@types/gapi.client.discovery-v1': 0.0.3
     dev: true
 
-  /@maxim_mazurok/gapi.client.drive-v3@0.0.20231024:
-    resolution: {integrity: sha512-gxncaEheiVL55ygKQwnZuuCAjFLPTipHcPbgqrXRcIZLg02iJQbuTx/PAvcWu8YcWBg86K1c7bDwdHT2eqWUZg==}
+  /@maxim_mazurok/gapi.client.drive-v3@0.0.20240110:
+    resolution: {integrity: sha512-xUSjWiXB4MEDoj4TN3rDYI2m8gS6AlZiHL0OPXoaD0znQ6M9mTlvaItUuwT0kJcJnAJKYIJC9hLYioKUaE8ktA==}
     dependencies:
       '@types/gapi.client': 1.0.7
       '@types/gapi.client.discovery-v1': 0.0.3
@@ -532,7 +532,7 @@ packages:
   /@types/gapi.client.drive-v3@0.0.1:
     resolution: {integrity: sha512-tIvUpcfeTZI5yRYWAPo/kx6w8kAfW8HeOAJPmXlhVpSBUO8R4hUVZiZhuc6PxNtQkI6LKXeyOuJv70Nd3Nb/8g==}
     dependencies:
-      '@maxim_mazurok/gapi.client.drive-v3': 0.0.20231024
+      '@maxim_mazurok/gapi.client.drive-v3': 0.0.20240110
     dev: true
 
   /@types/gapi.client@1.0.7:
@@ -1289,8 +1289,8 @@ packages:
     dev: false
     optional: true
 
-  /msgpackr@1.9.9:
-    resolution: {integrity: sha512-sbn6mioS2w0lq1O6PpGtsv6Gy8roWM+o3o4Sqjd6DudrL/nOugY+KyJUimoWzHnf9OkO0T6broHFnYE/R05t9A==}
+  /msgpackr@1.10.1:
+    resolution: {integrity: sha512-r5VRLv9qouXuLiIBrLpl2d5ZvPt8svdQTl5/vMvE4nzDMyEX4sgW5yWhuBBj5UmgwOTWj8CIdSXn5sAfsHAWIQ==}
     optionalDependencies:
       msgpackr-extract: 3.0.2
     dev: false
