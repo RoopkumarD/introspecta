@@ -1,3 +1,6 @@
+**Note: This project is currently in beta, so if you are planning to use it for daily purposes, I highly don't recommend it.**
+---
+
 <div align="center">
   <h1 align="center">📓 Introspecta - Beta Version</h1>
   <h3>Your Personal Web Diary App Focused on Privacy</h3>
